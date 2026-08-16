@@ -1,0 +1,103 @@
+{
+  "prompt_type": "product_hero_illustration",
+  "subject": "A rich, colorful product-explainer illustration: a large mobile phone mockup in the center showing the actual link-in-bio hub app, surrounded by labeled feature callout cards connected to specific parts of the phone screen with thin lines — so a viewer understands what the product does just by looking at the image. Flat vector SaaS marketing illustration, not photorealistic.",
+  "background": {
+    "type": "solid dark base, but NOT empty — filled with intentional color, not a bare black canvas",
+    "base_color": "#14161A to #1B1E24 subtle vertical gradient (near-black, not pure flat black)",
+    "accent_fills": [
+      "one large, soft, blurred cyan-blue blob (#54E0FF/#29ADFF, ~15% opacity) glowing behind the upper-left area, fully contained within that quadrant, soft edges fading to nothing before reaching other elements",
+      "one large, soft, blurred warm amber/coral blob (#FBBF24 or #FF8A5B, ~10% opacity) glowing behind the lower-right area, same soft-contained treatment"
+    ],
+    "note": "The background should read as rich and designed, not stark or mostly-empty. These are intentional soft color pools placed IN THE BACKGROUND ONLY — they must never touch or fringe the edges of the phone or cards themselves (no glow halo wrapping around any subject's outline)."
+  },
+  "art_style": [
+    "clean flat vector UI illustration with real color",
+    "flat mobile phone mockup (rounded-rect device frame, flat screen, no glossy reflections)",
+    "flat matte cards, no glass, no chrome bevel",
+    "hard crisp edges, axis-aligned cards, phone can sit straight or with a very slight (max 3-4deg) natural tilt",
+    "flat 2D icons, thin consistent stroke weight",
+    "editorial, premium, colorful — think a well-designed app-store feature graphic or product explainer, not a moody dark-mode screenshot"
+  ],
+  "color_palette": {
+    "phone_frame": "flat #0F1113 device body, flat #18181A screen background",
+    "card_surface": "flat solid #1E1E20, thin 1px border #33373B",
+    "connector_lines": "flat solid #54E0FF at 60% opacity, thin (1.5-2px), right-angle bends like a circuit diagram",
+    "cyan": "#54E0FF",
+    "blue": "#29ADFF",
+    "whatsapp_green": "#25D366",
+    "star_amber": "#FBBF24",
+    "live_dot_emerald": "#34D399",
+    "warm_accent": "#FF8A5B (used sparingly for one card/background blob only)",
+    "text_primary": "#FFFFFF",
+    "text_muted": "#9A9AA3",
+    "restriction": "No purple or indigo anywhere. Every other color above is welcome — this should feel colorful and varied, not monochrome."
+  },
+  "composition": {
+    "layout": "large phone mockup as the vertical centerpiece, roughly 45% of the frame height. 4-5 small labeled callout cards arranged around it (upper-left, upper-right, lower-left, lower-right, one directly beside the phone), each connected to a specific point on the phone screen by a thin right-angle line ending in a small dot on the phone. Composition should feel full and rich — minimize large empty gaps.",
+    "elements": [
+      {
+        "id": "phone_mockup",
+        "type": "centered flat phone device frame",
+        "screen_content": [
+          "small circular logo badge near the top (simple flat rounded-square scan-frame glyph, blue with red accent)",
+          "one bold white text line: 'Grand Cafe & Bakery' (real, legible, large enough to render cleanly)",
+          "one thin muted-gray subtitle line beneath it",
+          "a solid flat WhatsApp-green pill button with a chat-bubble icon and the real bold label 'Order on WhatsApp'",
+          "a solid flat dark pill button with an amber star icon and the real bold label 'Google Reviews'",
+          "a small QR code icon/badge near the bottom of the screen representing the share/QR action"
+        ]
+      },
+      {
+        "id": "card_qr",
+        "type": "small flat rounded card, positioned beside the phone's QR badge",
+        "connects_to": "the QR badge near the bottom of the phone screen",
+        "content": "a real, correctly-structured flat QR code pattern in solid cyan #54E0FF with visible finder squares, plus one real short bold caption beneath it: 'Scan to visit'"
+      },
+      {
+        "id": "card_whatsapp",
+        "type": "small flat rounded card, upper-left, connected to the WhatsApp button on the phone",
+        "content": "small flat white chat-bubble icon plus one real short bold caption: 'WhatsApp Ordering'"
+      },
+      {
+        "id": "card_reviews",
+        "type": "small flat rounded card, upper-right, connected to the Reviews button on the phone",
+        "content": "small flat amber star icon plus one real short bold caption: '5-Star Reviews'"
+      },
+      {
+        "id": "card_stats",
+        "type": "small flat rounded card, lower-left, connected to the top of the phone",
+        "content": "tiny emerald live-dot plus one real short bold caption: '247 scans this week'"
+      },
+      {
+        "id": "card_permanent",
+        "type": "small flat rounded card, lower-right, connected to the logo badge on the phone",
+        "content": "small flat lock or infinity icon in warm accent color, plus one real short bold caption: 'Never expires'"
+      }
+    ]
+  },
+  "lighting_and_atmosphere": {
+    "shadow_style": "soft, small, ordinary drop shadow beneath the phone and beneath each card — short blur radius, low opacity, like a standard product-shot shadow, not a glow.",
+    "glow_scope": "background accent color pools only (see background.accent_fills) — no glow hugging or outlining any card/phone edge.",
+    "overall_mood": "colorful, informative, premium product-explainer graphic — a viewer should understand the product from this image alone"
+  },
+  "typography_note": "Real, short, bold, legible text IS wanted this time: the phone's business name and both button labels, plus one short caption per callout card. Keep every piece of text SHORT (2-4 words max) and set in a simple bold sans-serif at a large-enough size to render cleanly — this is proven to work when text is short and bold rather than long or small.",
+  "technical_specs": {
+    "aspect_ratio": "4:5 (portrait, tall enough for a full phone mockup)",
+    "resolution": "at least 1600x2000px",
+    "format": "PNG, background per background.type (not transparent)",
+    "no_watermark": true
+  },
+  "negative_prompt": [
+    "no glow or color fringing directly on the phone or card edges",
+    "no chromatic aberration",
+    "no glass/glossy/chrome bevel reflections on the phone or cards",
+    "no 3D glossy icon-pack rendering",
+    "no purple or indigo anywhere",
+    "no mostly-empty flat black background — background must feel designed and colorful per the accent_fills",
+    "no photorealistic hands or humans holding the phone",
+    "no curved freeform connector lines — right-angle bends only",
+    "no long paragraphs of text, no attempted body copy — captions only, 2-4 words each",
+    "no overlapping cards on top of each other"
+  ],
+  "reference_direction": "Combine two things that already worked: (1) the clean hub-and-spoke connector-line structure with short bold real text, and (2) a phone-mockup product shot with labeled feature callouts (like an app-store feature graphic). Richer and more colorful than a stark dark diagram, but still flat, clean, and legible — not glossy, not neon, not a messy glow halo."
+}
