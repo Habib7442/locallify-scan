@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useUser, SignUpButton } from "@clerk/nextjs";
 import { ChevronRight, User } from "lucide-react";
 
@@ -67,11 +68,20 @@ export function Hero({ heroImageVersion }: { heroImageVersion?: string }) {
           </div>
 
           <div className="w-full max-w-xs mb-8">
-            <SignUpButton>
-              <button className="font-medium text-[14px] tracking-[-0.42px] rounded-[12px] shadow-[0px_8px_20px_rgba(0,0,0,0.30)] h-[44px] w-full flex items-center justify-center bg-white text-[#18181a] hover:bg-gray-100 transition-all duration-300 cursor-pointer">
-                Create Your Profile
-              </button>
-            </SignUpButton>
+            {isSignedIn ? (
+              <Link
+                href="/dashboard"
+                className="font-medium text-[14px] tracking-[-0.42px] rounded-[12px] shadow-[0px_8px_20px_rgba(0,0,0,0.30)] h-[44px] w-full flex items-center justify-center bg-white text-[#18181a] hover:bg-gray-100 transition-all duration-300"
+              >
+                Go to Dashboard
+              </Link>
+            ) : (
+              <SignUpButton forceRedirectUrl="/onboarding">
+                <button className="font-medium text-[14px] tracking-[-0.42px] rounded-[12px] shadow-[0px_8px_20px_rgba(0,0,0,0.30)] h-[44px] w-full flex items-center justify-center bg-white text-[#18181a] hover:bg-gray-100 transition-all duration-300 cursor-pointer">
+                  Create Your Profile
+                </button>
+              </SignUpButton>
+            )}
           </div>
 
           {/* Preview image */}
@@ -141,11 +151,20 @@ export function Hero({ heroImageVersion }: { heroImageVersion?: string }) {
             className="absolute flex items-center gap-4"
             style={{ left: "clamp(1rem, 10.4vw, 150px)", top: "575px", height: "60px" }}
           >
-            <SignUpButton>
-              <button className="font-medium text-[20px] tracking-[-0.6px] rounded-[15px] shadow-[0px_12px_32px_rgba(0,0,0,0.40)] h-full px-8 flex items-center justify-center bg-white text-[#18181a] hover:bg-gray-100 transition-all duration-300 cursor-pointer whitespace-nowrap">
-                Create Your Profile
-              </button>
-            </SignUpButton>
+            {isSignedIn ? (
+              <Link
+                href="/dashboard"
+                className="font-medium text-[20px] tracking-[-0.6px] rounded-[15px] shadow-[0px_12px_32px_rgba(0,0,0,0.40)] h-full px-8 flex items-center justify-center bg-white text-[#18181a] hover:bg-gray-100 transition-all duration-300 whitespace-nowrap"
+              >
+                Go to Dashboard
+              </Link>
+            ) : (
+              <SignUpButton forceRedirectUrl="/onboarding">
+                <button className="font-medium text-[20px] tracking-[-0.6px] rounded-[15px] shadow-[0px_12px_32px_rgba(0,0,0,0.40)] h-full px-8 flex items-center justify-center bg-white text-[#18181a] hover:bg-gray-100 transition-all duration-300 cursor-pointer whitespace-nowrap">
+                  Create Your Profile
+                </button>
+              </SignUpButton>
+            )}
             <a
               href="#live-preview"
               onClick={handleScrollToPreview}

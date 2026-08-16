@@ -57,11 +57,17 @@ export function Navbar() {
               >
                 How it Works
               </a>
+              <Link
+                href="/pricing"
+                className="text-[#7a7a83] text-[15px] font-light tracking-[-0.45px] hover:text-white transition-colors"
+              >
+                Pricing
+              </Link>
             </div>
 
             <div className="flex items-center gap-2">
               <Show when="signed-out">
-                <SignUpButton>
+                <SignUpButton forceRedirectUrl="/onboarding">
                   <button className="hidden sm:inline-flex bg-white text-[#18181a] hover:bg-gray-100 font-medium text-[13px] sm:text-[15px] tracking-[-0.39px] sm:tracking-[-0.45px] rounded-[10px] px-3 sm:px-4 py-2 transition-colors cursor-pointer">
                     Sign Up
                   </button>
@@ -108,8 +114,15 @@ export function Navbar() {
                     >
                       How it Works
                     </a>
+                    <Link
+                      href="/pricing"
+                      onClick={() => setIsSheetOpen(false)}
+                      className="text-[#7a7a83] text-[15px] font-light tracking-[-0.45px] hover:text-white transition-colors py-3 px-3 rounded-lg hover:bg-white/5"
+                    >
+                      Pricing
+                    </Link>
                     <Show when="signed-out">
-                      <SignUpButton>
+                      <SignUpButton forceRedirectUrl="/onboarding">
                         <button
                           onClick={() => setIsSheetOpen(false)}
                           className="mt-3 bg-white text-[#18181a] hover:bg-gray-100 font-medium text-[15px] tracking-[-0.45px] rounded-[10px] px-4 py-2.5 transition-colors cursor-pointer"

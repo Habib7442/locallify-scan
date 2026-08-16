@@ -1,11 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
-
-const CONTACT_WHATSAPP = "https://wa.me/910000000000";
-const CONTACT_MESSAGE = encodeURIComponent(
-  "Hi Locallify, I'd like to get a permanent QR code for my business."
-);
+import { SignUpButton, Show } from "@clerk/nextjs";
+import { Check } from "lucide-react";
 
 export function Footer() {
   return (
@@ -31,37 +27,79 @@ export function Footer() {
           </div>
 
           <h2 className="text-3xl sm:text-5xl font-normal tracking-[-0.03em] mb-6 text-balance">
-            Ready to secure your{" "}
+            Ready to build your{" "}
             <span className="font-semibold italic gradient-text-accent">permanent QR code</span>?
           </h2>
           <p className="text-[#7a7a83] font-light max-w-xl mx-auto text-base sm:text-lg mb-10">
-            We set it up for you — no signup needed.
+            Start your 7-day free trial and build your hub. Order a physical print only when
+            you&apos;re ready.
           </p>
 
-          <Link
-            href={`${CONTACT_WHATSAPP}?text=${CONTACT_MESSAGE}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-3 rounded-[15px] px-8 py-4 text-base font-medium tracking-[-0.02em] text-[#18181a] bg-white hover:bg-gray-100 shadow-[0px_12px_32px_rgba(0,0,0,0.40)] transition-all hover:-translate-y-0.5"
-          >
-            <MessageCircle className="size-5" />
-            <span>Talk to us on WhatsApp</span>
-          </Link>
+          <Show when="signed-out">
+            <SignUpButton forceRedirectUrl="/onboarding">
+              <button className="inline-flex items-center gap-2 rounded-[15px] px-8 py-4 text-base font-medium tracking-[-0.02em] text-[#18181a] bg-white hover:bg-gray-100 shadow-[0px_12px_32px_rgba(0,0,0,0.40)] transition-all hover:-translate-y-0.5 cursor-pointer">
+                Start Your Free Trial
+              </button>
+            </SignUpButton>
+          </Show>
+          <Show when="signed-in">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 rounded-[15px] px-8 py-4 text-base font-medium tracking-[-0.02em] text-[#18181a] bg-white hover:bg-gray-100 shadow-[0px_12px_32px_rgba(0,0,0,0.40)] transition-all hover:-translate-y-0.5"
+            >
+              Go to Dashboard
+            </Link>
+          </Show>
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[#7a7a83]">
+            <span className="inline-flex items-center gap-1.5">
+              <Check className="size-4 text-[#54e0ff]" />
+              7-day free trial
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Check className="size-4 text-[#54e0ff]" />
+              No credit card
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Check className="size-4 text-[#54e0ff]" />
+              Printed QR optional
+            </span>
+          </div>
         </div>
       </section>
 
       {/* FOOTER */}
       <footer className="py-10 px-4 bg-[#1a1a1c] text-[#7a7a83] text-xs border-t border-white/10">
-        <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="relative h-6 w-6 shrink-0">
-              <Image src="/logo-icon.png" alt="" fill sizes="24px" className="object-contain" />
+        <div className="mx-auto max-w-7xl flex flex-col gap-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="relative h-6 w-6 shrink-0">
+                <Image src="/logo-icon.png" alt="" fill sizes="24px" className="object-contain" />
+              </div>
+              <span className="text-white font-medium tracking-[-0.2px]">Locallify Scan</span>
+              <span className="text-[#54545a]">© {new Date().getFullYear()}</span>
             </div>
-            <span className="text-white font-medium tracking-[-0.2px]">Locallify Scan</span>
-            <span className="text-[#54545a]">© {new Date().getFullYear()}</span>
-          </div>
 
-          <p className="text-[#54545a]">Powered by Locallify</p>
+            <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+              <Link href="/privacy-policy" className="text-[#7a7a83] hover:text-white transition-colors">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="text-[#7a7a83] hover:text-white transition-colors">
+                Terms &amp; Conditions
+              </Link>
+              <Link href="/shipping-policy" className="text-[#7a7a83] hover:text-white transition-colors">
+                Shipping Policy
+              </Link>
+              <Link href="/refund-policy" className="text-[#7a7a83] hover:text-white transition-colors">
+                Cancellation &amp; Refunds
+              </Link>
+              <Link href="/contact-us" className="text-[#7a7a83] hover:text-white transition-colors">
+                Contact Us
+              </Link>
+            </nav>
+
+            <p className="text-[#54545a]">Powered by Locallify</p>
+          </div>
         </div>
       </footer>
     </>

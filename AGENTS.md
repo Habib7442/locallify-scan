@@ -71,7 +71,7 @@ Use them for:
 
 Do not invent new skills.
 
-For Tailwind, shadcn/ui, any QR-generation library, and the payment provider once chosen, use existing project patterns, package docs, and `node_modules/next/dist/docs/`.
+For Tailwind, shadcn/ui, any QR-generation library, and Razorpay (the confirmed payment provider), use existing project patterns, package docs, and `node_modules/next/dist/docs/`.
 
 ---
 
@@ -130,7 +130,7 @@ Use:
 - Tailwind CSS
 - shadcn/ui
 - A QR generation library supporting PNG + SVG export and an optional centre logo (pick and confirm in the relevant prompt file — not yet decided)
-- A payment provider for Order Printed QR (Razorpay vs. Stripe vs. other — not yet decided, see Open decisions)
+- Razorpay for Order Printed QR payments (confirmed — already activated)
 
 Do not use:
 
@@ -147,7 +147,7 @@ Supabase is the source of truth for app data (descriptive, not SQL — see `PRD.
 
 - `agencies` — id, name, domain, owner_clerk_id (one row for Locallify; every user's page belongs to it)
 - `profiles` — clerk_user_id, agency_id, role, name, email (maps a Clerk user to a role: `agency_admin` / `user`; created automatically on signup via webhook)
-- `pages` — id, agency_id, owner_clerk_id, slug, display_name, tagline, vertical (nullable), theme, accent, logo_path, bg_type (solid/image), bg_value, active — one hub per user; `vertical` is nullable since most users won't set one
+- `pages` — id, agency_id, owner_clerk_id, slug, display_name, tagline, vertical (nullable), theme, accent, logo_path, bg_type (solid/image), bg_value, active, subscription_status (trialing/active/past_due/cancelled), trial_ends_at — one hub per user; `vertical` is nullable since most users won't set one. `subscription_status`/`trial_ends_at` are set once at signup by the webhook; nothing enforces them yet (no billing, no gating) — tracking only until the paywall is built
 - `links` — id, page_id, type, label, sub, destination, position, active — ordered by position
 - `scans` — id, page_id, link_id (nullable), created_at, device, country, referrer — link_id null = hub view, set = button tap
 - `orders` — id, page_id, owner_clerk_id, status (pending/printed/shipped/cancelled), shipping_address, price, currency, payment_reference, created_at, shipped_at — printed-QR purchase, fulfilled manually by the agency admin
@@ -193,7 +193,7 @@ Full default-link lists and signature-feature behaviour are in `PRD.md` §5.4. B
 
 # 10. Link types
 
-Initial set: WhatsApp (phone + message), Google review (URL), Website (URL), Call (phone), Instagram (URL), Directions/Maps (URL), Menu (URL/PDF), Book/Appointment (URL or WhatsApp), Custom (label + URL). Each renders with a type-appropriate icon (`PRD.md` §5.5).
+WhatsApp (phone + message), Google review (URL), Website (URL), Call (phone), Instagram (URL), Facebook (URL), X/Twitter (URL), YouTube (URL), Snapchat (URL), LinkedIn (URL), GitHub (URL), Directions/Maps (URL), Menu (URL/PDF), Book/Appointment (URL or WhatsApp), Custom (label + URL). Each renders with a real brand icon (`lib/link-types.tsx` — lucide-react for generic types, `react-icons/fa6` for social/brand types) rather than a generic placeholder (`PRD.md` §5.5).
 
 WhatsApp links open `wa.me` with a pre-filled message. Call links use `tel:`.
 
@@ -235,7 +235,7 @@ A user can select/update rows in `pages`, `links`, and `orders` only where the r
 
 ## Payments
 
-Never trust a client-submitted "order paid" status. Verify with the payment provider server-side (webhook or server-side confirm call) before creating or advancing an `orders` row's status. Provider not yet chosen — see Open decisions.
+Never trust a client-submitted "order paid" status. Verify with Razorpay server-side (webhook or server-side confirm call) before creating or advancing an `orders` row's status.
 
 ## Known gotcha
 
@@ -268,9 +268,10 @@ Only `NEXT_PUBLIC_*` values may reach browser code; everything else is server-on
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key | client + server |
 | `CLERK_SECRET_KEY` | Clerk server-side key | server only |
 | Clerk sign-in/up route vars (written by `clerk init`) | Sign-in/sign-up route + redirect config | client + server |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | client + server — not yet configured |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key, used with RLS | client + server — not yet configured |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service-role access for the anonymous public-hub path only | server only — not yet configured |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | client + server — configured |
+| `NEXT_PUBLIC_PUBLISHABLE_KEY` | Supabase publishable key, used with RLS (Supabase's current naming — supersedes the old `ANON_KEY` term) | client + server — configured |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service-role access for the anonymous public-hub path and the Clerk signup webhook only | server only — configured |
+| `CLERK_WEBHOOK_SIGNING_SECRET` | Svix signing secret for verifying `/api/webhooks/clerk` deliveries | server only — set this when registering the webhook endpoint |
 
 Keep this table in sync when variables change.
 
@@ -280,12 +281,12 @@ Keep this table in sync when variables change.
 
 These are unresolved in `PRD.md` §13 — ask the user rather than assuming an answer:
 
-- Payment provider for Order Printed QR (Razorpay vs. Stripe vs. other).
 - Price of a printed QR order, and whether shipping is domestic-only or international.
 - First vertical to build fully: restaurant vs clinic.
-- Redirect domain: subdomain of the agency domain vs a short standalone domain.
 - Which QR generation library to use (§6).
 - Whether an agency-managed paid service tier (Habib sets things up for a fee) still ships alongside self-serve, or is dropped entirely.
+
+**Resolved:** payment provider is Razorpay; redirect domain is `scan.locallifyagency.com`.
 
 ---
 

@@ -115,7 +115,7 @@ that updates as changes are made.
 
 ### 5.4 Order Printed QR (new — paid feature)
 - From the Share & QR tab, a user starts an order: confirms the QR design, pays
-  (payment provider **not yet decided** — see §13), and submits a shipping address.
+  via **Razorpay**, and submits a shipping address.
 - Order is created with status `pending`. Habib fulfills it manually: prints the
   code, ships it, then marks the order `printed` → `shipped` from the agency dashboard.
 - User can see their own order status on their Share & QR tab.
@@ -194,16 +194,16 @@ path referenced from `pages` / a `gallery` table.
   with the service role and avoid that issue entirely.
 
 **Payments (Order Printed QR)**
-- Provider **not yet decided** — see §13. Needs to support one-time purchases and,
-  given the ₹-denominated example in §1, likely wants strong India support (e.g.
-  Razorpay) as well as international cards if the audience isn't India-only.
-- Order creation should be a server-side action; never trust a client-submitted
-  "paid" status without verifying with the payment provider (webhook or server-side confirm).
+- Provider: **Razorpay** (already activated). Order creation should be a
+  server-side action; never trust a client-submitted "paid" status without
+  verifying with Razorpay (webhook or server-side confirm).
 
 **Hosting & domain**
 - Next.js on Vercel.
-- A dedicated domain so every printed code sits under Locallify-owned
-  infrastructure — the whole anti-hostage promise depends on owning this.
+- Redirect domain: **scan.locallifyagency.com** — a subdomain of Locallify's
+  existing company site (locallifyagency.com), not a separate standalone
+  domain. Every printed code sits under Locallify-owned infrastructure at
+  this subdomain — the whole anti-hostage promise depends on owning this.
 
 **QR generation**
 - Generate client-side or server-side with a QR library; support PNG + SVG export
@@ -264,9 +264,10 @@ tier (Habib sets up/edits a page on a client's behalf for a fee) may still exist
 alongside self-serve, but it's no longer the primary onboarding path.
 
 ## 13. Open decisions
-- Payment provider for Order Printed QR (Razorpay vs Stripe vs other) — needs
-  deciding before that feature can be built.
 - Price of a printed QR order, and whether shipping is domestic-only or international.
 - First vertical to build fully: restaurant vs clinic.
-- Redirect domain: subdomain of the agency domain vs a short standalone domain.
 - Whether an agency-managed service tier (Habib sets things up for a fee) still ships alongside self-serve, or is dropped entirely.
+
+**Resolved:**
+- Payment provider: **Razorpay** (already activated).
+- Redirect domain: **scan.locallifyagency.com** (subdomain of the existing company site).

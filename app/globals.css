@@ -137,6 +137,15 @@
   box-shadow: 0 10px 40px rgba(84, 224, 255, 0.1);
 }
 
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 @keyframes hero-float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-6px); }

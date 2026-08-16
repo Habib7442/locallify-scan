@@ -28,7 +28,7 @@ export function HeroCanvas() {
           <span className="size-3 rounded-full bg-[#f59e0b]" />
           <span className="size-3 rounded-full bg-[#10b981]" />
           <span className="ml-2 font-mono text-[11px] text-[#7a7a83] bg-white/5 px-3 py-1 rounded-full border border-white/10">
-            locallify.link/grand-cafe (example)
+            scan.locallifyagency.com/grand-cafe (example)
           </span>
         </div>
         <div className="hidden sm:flex items-center gap-2 text-[#54e0ff] bg-[#54e0ff]/10 px-3 py-1 rounded-full border border-[#54e0ff]/20">
