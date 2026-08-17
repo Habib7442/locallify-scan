@@ -1,12 +1,44 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useUser, SignUpButton } from "@clerk/nextjs";
 import { ChevronRight, User } from "lucide-react";
 
-export function Hero({ heroImageVersion }: { heroImageVersion?: string }) {
+const SHOWCASE_ITEMS = [
+  {
+    id: "cafe",
+    name: "Nico & Fran",
+    role: "Founders of Pistachio Bakery",
+    image: "/assets/showcase_cafe.png",
+  },
+  {
+    id: "creator",
+    name: "Zay Dante",
+    role: "Creator & Musician",
+    image: "/assets/showcase_creator.png",
+  },
+  {
+    id: "fitness",
+    name: "Kelsey Rose",
+    role: "Trainer & Founder of Shaep",
+    image: "/assets/showcase_fitness.png",
+  },
+];
+
+export function Hero() {
   const { user, isSignedIn } = useUser();
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveIdx((prev) => (prev + 1) % SHOWCASE_ITEMS.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const activeItem = SHOWCASE_ITEMS[activeIdx];
 
   const handleScrollToPreview = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -20,7 +52,7 @@ export function Hero({ heroImageVersion }: { heroImageVersion?: string }) {
 
   return (
     <section
-      className="relative w-full h-auto min-h-[600px] sm:h-[879px] bg-[#18181a] overflow-x-hidden overflow-y-visible sm:overflow-hidden"
+      className="relative w-full h-auto min-h-[600px] sm:h-[760px] bg-[#18181a] overflow-x-hidden overflow-y-visible sm:overflow-hidden"
       style={{
         backgroundImage: "url(/background-grid.svg)",
         backgroundRepeat: "no-repeat",
@@ -28,7 +60,7 @@ export function Hero({ heroImageVersion }: { heroImageVersion?: string }) {
         backgroundPosition: "center",
       }}
     >
-      <div className="relative w-full max-w-[1440px] h-auto min-h-[600px] sm:h-[879px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20">
+      <div className="relative w-full max-w-[1440px] h-auto min-h-[600px] sm:h-[760px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20">
         {/* Mobile Layout (below 640px) */}
         <div className="sm:hidden flex flex-col items-center text-center px-4 pt-24 pb-10">
           {isSignedIn && (
@@ -84,19 +116,22 @@ export function Hero({ heroImageVersion }: { heroImageVersion?: string }) {
             )}
           </div>
 
-          {/* Preview image */}
-          <div
-            className="relative w-full max-w-[300px]"
-            style={{ aspectRatio: "1122 / 1402" }}
-          >
-            <Image
-              src={`/assets/hero_image.webp${heroImageVersion ? `?v=${heroImageVersion}` : ""}`}
-              alt="Locallify Scan hub page: WhatsApp ordering, Google reviews, live scan stats, and a permanent QR code"
-              fill
-              unoptimized
-              sizes="300px"
-              className="object-contain"
-            />
+          {/* Mobile Showcase Preview */}
+          <div className="relative w-full max-w-[320px] rounded-[24px] overflow-hidden border border-white/10 shadow-2xl bg-[#1e1e20]">
+            <div className="relative w-full aspect-[4/5]">
+              <Image
+                src={activeItem.image}
+                alt={`${activeItem.name} - ${activeItem.role}`}
+                fill
+                sizes="320px"
+                className="object-cover transition-opacity duration-500"
+              />
+            </div>
+            <div className="p-3 bg-[#18181a]/90 backdrop-blur-md border-t border-white/10 text-center">
+              <p className="text-xs text-white font-mono tracking-tight">
+                <span className="font-semibold">{activeItem.name}.</span> {activeItem.role}.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -175,25 +210,46 @@ export function Hero({ heroImageVersion }: { heroImageVersion?: string }) {
             </a>
           </div>
 
-          {/* Right Side Preview Container */}
+          {/* Right Side Showcase Showcase Frame */}
           <div
             className="absolute"
             style={{
-              left: "clamp(calc(100% - 444px - 2rem), 58.8vw, 846px)",
-              top: "195px",
-              width: "min(444px, 31vw)",
-              height: "536px",
+              left: "clamp(calc(100% - 460px - 2rem), 56vw, 830px)",
+              top: "225px",
+              width: "min(460px, 33vw)",
+              height: "min(460px, 33vw)",
             }}
           >
-            <Image
-              src={`/assets/hero_image.webp${heroImageVersion ? `?v=${heroImageVersion}` : ""}`}
-              alt="Locallify Scan hub page: WhatsApp ordering, Google reviews, live scan stats, and a permanent QR code"
-              fill
-              priority
-              unoptimized
-              sizes="444px"
-              className="object-contain"
-            />
+            {/* Main Showcase Image Frame */}
+            <div className="relative w-full h-full rounded-[24px] overflow-hidden border border-white/15 shadow-[0px_24px_60px_rgba(0,0,0,0.5)] bg-[#1e1e20] group">
+              {SHOWCASE_ITEMS.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                    activeIdx === idx ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+                  }`}
+                >
+                  <Image
+                    src={item.image}
+                    alt={`${item.name} - ${item.role}`}
+                    fill
+                    priority={idx === 0}
+                    sizes="460px"
+                    className="object-cover object-center"
+                  />
+                </div>
+              ))}
+
+              {/* Linktree style bottom caption */}
+              <div className="absolute bottom-5 left-4 right-4 z-20 flex justify-center">
+                <div className="px-5 py-2.5 rounded-full bg-black/75 backdrop-blur-md border border-white/15 shadow-2xl text-center">
+                  <p className="text-xs sm:text-sm text-white font-mono tracking-tight">
+                    <span className="font-semibold text-[#54E0FF]">{activeItem.name}.</span>{" "}
+                    <span className="text-gray-200">{activeItem.role}.</span>
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

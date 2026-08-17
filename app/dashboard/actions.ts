@@ -175,6 +175,73 @@ export async function updateLogoPath(path: string | null): Promise<ActionResult>
   return { success: true };
 }
 
+export async function updateBranding(input: {
+  theme: string;
+  accent: string | null;
+  headingFont: string;
+  linkFont: string;
+  bgType: string;
+  bgValue: string | null;
+  bgImageBrightness: number;
+  bgImageContrast: number;
+  bgImageOverlay: number;
+  headingColor: string | null;
+  taglineColor: string | null;
+  linkBgColor: string | null;
+  linkTextColor: string | null;
+}): Promise<ActionResult> {
+  const { userId } = await auth();
+  if (!userId) return { success: false, error: "Not signed in." };
+
+  const supabase = createServerSupabaseClient();
+  const { error } = await supabase
+    .from("pages")
+    .update({
+      theme: input.theme,
+      accent: input.accent,
+      heading_font: input.headingFont,
+      link_font: input.linkFont,
+      bg_type: input.bgType,
+      bg_value: input.bgValue,
+      bg_image_brightness: input.bgImageBrightness,
+      bg_image_contrast: input.bgImageContrast,
+      bg_image_overlay: input.bgImageOverlay,
+      heading_color: input.headingColor,
+      tagline_color: input.taglineColor,
+      link_bg_color: input.linkBgColor,
+      link_text_color: input.linkTextColor,
+    })
+    .eq("owner_clerk_id", userId);
+
+  if (error) return { success: false, error: "Could not save branding." };
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+export async function updateProfile(input: {
+  displayName: string;
+  tagline: string;
+}): Promise<ActionResult> {
+  const { userId } = await auth();
+  if (!userId) return { success: false, error: "Not signed in." };
+  if (!input.displayName.trim()) return { success: false, error: "Name is required." };
+
+  const supabase = createServerSupabaseClient();
+  const { error } = await supabase
+    .from("pages")
+    .update({
+      display_name: input.displayName.trim(),
+      tagline: input.tagline.trim() || null,
+    })
+    .eq("owner_clerk_id", userId);
+
+  if (error) return { success: false, error: "Could not save profile." };
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
 export async function setPageActive(active: boolean): Promise<ActionResult> {
   const { userId } = await auth();
   if (!userId) return { success: false, error: "Not signed in." };

@@ -129,7 +129,7 @@ Use:
 - Supabase (Postgres, Storage)
 - Tailwind CSS
 - shadcn/ui
-- A QR generation library supporting PNG + SVG export and an optional centre logo (pick and confirm in the relevant prompt file — not yet decided)
+- `qr-code-styling` for QR generation (confirmed) — supports PNG + SVG export and an optional centre logo
 - Razorpay for Order Printed QR payments (confirmed — already activated)
 
 Do not use:
@@ -272,6 +272,7 @@ Only `NEXT_PUBLIC_*` values may reach browser code; everything else is server-on
 | `NEXT_PUBLIC_PUBLISHABLE_KEY` | Supabase publishable key, used with RLS (Supabase's current naming — supersedes the old `ANON_KEY` term) | client + server — configured |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service-role access for the anonymous public-hub path and the Clerk signup webhook only | server only — configured |
 | `CLERK_WEBHOOK_SIGNING_SECRET` | Svix signing secret for verifying `/api/webhooks/clerk` deliveries | server only — set this when registering the webhook endpoint |
+| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Google Search Console site-verification code, read by `lib/seo.ts` | client + server — not yet set; get it from https://search.google.com/search-console |
 
 Keep this table in sync when variables change.
 
@@ -283,10 +284,9 @@ These are unresolved in `PRD.md` §13 — ask the user rather than assuming an a
 
 - Price of a printed QR order, and whether shipping is domestic-only or international.
 - First vertical to build fully: restaurant vs clinic.
-- Which QR generation library to use (§6).
 - Whether an agency-managed paid service tier (Habib sets things up for a fee) still ships alongside self-serve, or is dropped entirely.
 
-**Resolved:** payment provider is Razorpay; redirect domain is `scan.locallifyagency.com`.
+**Resolved:** payment provider is Razorpay; redirect domain is `scan.locallifyagency.com`; QR generation library is `qr-code-styling`.
 
 ---
 

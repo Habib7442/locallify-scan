@@ -1,14 +1,16 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { SignUpButton, Show } from "@clerk/nextjs";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = buildMetadata({
   title: "Pricing — Locallify Scan",
   description: "Simple, transparent pricing for your permanent QR hub.",
-};
+  path: "/pricing",
+  keywords: ["Locallify Scan pricing", "QR code subscription", "link in bio pricing"],
+});
 
 type Tier = {
   name: string;

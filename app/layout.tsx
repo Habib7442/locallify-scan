@@ -2,6 +2,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { shadcn } from "@clerk/ui/themes";
 import type { Metadata } from "next";
 import { Hanken_Grotesk } from "next/font/google";
+import { SITE_URL } from "@/lib/site";
+import { GOOGLE_SITE_VERIFICATION, buildMetadata } from "@/lib/seo";
 import "./globals.css";
 
 // The reference (link4coders) specifies "Sharp Grotesk" via a Google Fonts
@@ -14,9 +16,24 @@ const bodySans = Hanken_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Locallify Scan — QR codes that never expire",
-  description:
-    "Your printed QR code lives on our domain, so it never expires and can't be held hostage.",
+  metadataBase: new URL(SITE_URL),
+  ...buildMetadata({
+    title: "Locallify Scan — QR codes that never expire",
+    description:
+      "Your printed QR code lives on our domain, so it never expires and can't be held hostage.",
+    path: "/",
+    keywords: [
+      "Locallify Scan",
+      "link in bio tool",
+      "QR code that never expires",
+      "QR code for restaurants",
+      "QR code for shops",
+      "QR menu",
+    ],
+  }),
+  ...(GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: GOOGLE_SITE_VERIFICATION } }
+    : {}),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -146,6 +146,31 @@
   display: none;
 }
 
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3a3e42 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #3a3e42;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #54e0ff;
+}
+
 @keyframes hero-float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-6px); }

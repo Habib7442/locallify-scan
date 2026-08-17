@@ -1,12 +1,14 @@
-import type { Metadata } from "next";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = buildMetadata({
   title: "Privacy Policy — Locallify Scan",
   description:
     "How Locallify Scan collects, uses, and protects data for hub owners and hub visitors.",
-};
+  path: "/privacy-policy",
+  keywords: ["Locallify Scan privacy policy", "data privacy QR code"],
+});
 
 const LAST_UPDATED = new Date().toLocaleDateString("en-IN", {
   year: "numeric",

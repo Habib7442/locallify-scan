@@ -39,11 +39,26 @@ create table public.pages (
   display_name text,
   tagline text,
   vertical text,
-  theme text not null default 'dark' check (theme in ('light', 'dark')),
+  theme text not null default 'midnight'
+    check (theme in ('midnight', 'blanc', 'sunset', 'neon', 'pastel', 'mono')),
   accent text,
   logo_path text,
   bg_type text not null default 'solid' check (bg_type in ('solid', 'image')),
   bg_value text,
+  bg_image_brightness numeric not null default 100
+    check (bg_image_brightness between 50 and 150),
+  bg_image_contrast numeric not null default 100
+    check (bg_image_contrast between 50 and 150),
+  bg_image_overlay numeric not null default 30
+    check (bg_image_overlay between 0 and 90),
+  heading_color text,
+  tagline_color text,
+  link_bg_color text,
+  link_text_color text,
+  heading_font text not null default 'hanken'
+    check (heading_font in ('hanken', 'inter', 'poppins', 'montserrat', 'space_grotesk', 'work_sans', 'roboto', 'playfair')),
+  link_font text not null default 'hanken'
+    check (link_font in ('hanken', 'inter', 'poppins', 'montserrat', 'space_grotesk', 'work_sans', 'roboto', 'playfair')),
   active boolean not null default true,
   subscription_status text not null default 'trialing'
     check (subscription_status in ('trialing', 'active', 'past_due', 'cancelled')),

@@ -1,12 +1,14 @@
-import type { Metadata } from "next";
 import { MessageCircle, Mail, MapPin } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = buildMetadata({
   title: "Contact Us — Locallify Scan",
   description: "Get in touch with the Locallify Scan team.",
-};
+  path: "/contact-us",
+  keywords: ["contact Locallify Scan", "Locallify Scan support"],
+});
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

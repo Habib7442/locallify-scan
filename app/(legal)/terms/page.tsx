@@ -1,12 +1,14 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = buildMetadata({
   title: "Terms & Conditions — Locallify Scan",
   description: "The terms that govern your use of Locallify Scan.",
-};
+  path: "/terms",
+  keywords: ["Locallify Scan terms and conditions", "Locallify Scan terms of service"],
+});
 
 const LAST_UPDATED = new Date().toLocaleDateString("en-IN", {
   year: "numeric",

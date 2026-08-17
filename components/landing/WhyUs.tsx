@@ -5,16 +5,16 @@ export function WhyUs() {
     <section id="why-us" className="py-20 px-4 bg-[#1a1a1c] border-y border-white/10">
       <div className="mx-auto max-w-4xl text-center">
         <h2 className="text-2xl sm:text-4xl font-bold text-white mb-6 text-balance">
-          This actually happened to a client
+          This happens more than you&apos;d think
         </h2>
 
         <p className="text-base sm:text-xl text-[#7a7a83] leading-relaxed max-w-3xl mx-auto mb-10 text-balance">
-          They printed a QR code from a third-party tool. When the free trial
-          behind it quietly ended, the vendor demanded{" "}
+          A business prints a QR code from a third-party tool. When the free
+          trial behind it quietly ends, the vendor demands{" "}
           <span className="font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded">
-            ₹2,000
+            up to ₹2,000
           </span>{" "}
-          to keep an already-printed code working.
+          just to keep an already-printed code working.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto text-left">
@@ -39,7 +39,7 @@ export function WhyUs() {
           <div className="p-6 rounded-2xl bg-[#54e0ff]/[0.04] border border-[#54e0ff]/20">
             <div className="flex items-center gap-2 text-[#54e0ff] font-bold text-sm mb-2">
               <ShieldCheck className="size-4" />
-              Locallify Agency Model
+              Locallify Scan
             </div>
             <ul className="space-y-2 text-xs text-[#c7c7cc]">
               <li className="flex items-start gap-2">

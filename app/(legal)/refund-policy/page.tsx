@@ -1,11 +1,13 @@
-import type { Metadata } from "next";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = buildMetadata({
   title: "Cancellation & Refunds Policy — Locallify Scan",
   description: "Refund and cancellation terms for printed QR orders and subscriptions.",
-};
+  path: "/refund-policy",
+  keywords: ["Locallify Scan refund policy", "Locallify Scan cancellation policy"],
+});
 
 const LAST_UPDATED = new Date().toLocaleDateString("en-IN", {
   year: "numeric",

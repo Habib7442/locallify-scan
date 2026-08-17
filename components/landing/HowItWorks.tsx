@@ -2,13 +2,13 @@ export function HowItWorks() {
   const steps = [
     {
       step: "01",
-      title: "We set up your hub",
-      desc: "Your logo, links, and branding — set up on our own domain.",
+      title: "You build your hub",
+      desc: "Sign up free and add your logo, links, and branding — live on our own domain in minutes.",
     },
     {
       step: "02",
-      title: "You print your QR",
-      desc: "One code, printed once. It never needs reprinting.",
+      title: "You order your QR",
+      desc: "Pay once, we print and ship it. One code, printed once — it never needs reprinting.",
     },
     {
       step: "03",

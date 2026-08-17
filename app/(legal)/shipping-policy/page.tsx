@@ -1,11 +1,13 @@
-import type { Metadata } from "next";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = buildMetadata({
   title: "Shipping & Delivery Policy — Locallify Scan",
   description: "How printed QR code orders are fulfilled and shipped.",
-};
+  path: "/shipping-policy",
+  keywords: ["Locallify Scan shipping policy", "printed QR code delivery"],
+});
 
 const LAST_UPDATED = new Date().toLocaleDateString("en-IN", {
   year: "numeric",

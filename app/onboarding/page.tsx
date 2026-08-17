@@ -1,11 +1,14 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { buildMetadata } from "@/lib/seo";
 import { OnboardingForm } from "./onboarding-form";
 
-export const metadata: Metadata = {
+export const metadata = buildMetadata({
   title: "Set up your hub — Locallify Scan",
-};
+  description: "Claim your link and set up your Locallify Scan hub.",
+  path: "/onboarding",
+  noIndex: true,
+});
 
 export default async function OnboardingPage() {
   const supabase = createServerSupabaseClient();
