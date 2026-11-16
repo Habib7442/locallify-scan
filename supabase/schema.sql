@@ -413,3 +413,25 @@ insert into public.vertical_templates (vertical, default_links, signature_featur
   ]'::jsonb,
   'Appointment request — a simple name + preferred-time form that sends straight to the clinic''s WhatsApp.'
 );
+
+-- ---------------------------------------------------------------
+-- WhatsApp webhook raw inbox (migration 0009)
+-- ---------------------------------------------------------------
+create table public.whatsapp_webhook_events (
+  id bigint generated always as identity primary key,
+  -- message id for messages; "<message id>:<status>" for statuses
+  wa_message_id text not null unique,
+  kind text not null check (kind in ('message', 'status')),
+  from_phone text,
+  payload jsonb not null,
+  received_at timestamptz not null default now()
+);
+
+create index whatsapp_webhook_events_received_at_idx
+  on public.whatsapp_webhook_events (received_at);
+
+-- RLS on with no policies: anon/authenticated get nothing.
+alter table public.whatsapp_webhook_events enable row level security;
+
+-- Defence in depth: no table privileges for the API roles either.
+revoke all on table public.whatsapp_webhook_events from anon, authenticated;

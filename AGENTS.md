@@ -197,11 +197,11 @@ The authoritative descriptive model is `PRD.md` §10. Dobara adds these tables, 
 
 Indexes required: `customers(business_id, phone_e164)`, `table_sessions(business_id, status)`, `prizes(customer_id, status)`, `message_log(business_id, created_at)`, plus an index on every foreign key.
 
-Existing tables still in the schema (`supabase/schema.sql`): `agencies`, `profiles`, `pages` (branding lives here), `links`, `scans`, `orders` (parked), `vertical_templates` (parked).
+Existing tables still in the schema (`supabase/schema.sql`): `agencies`, `profiles`, `pages` (branding lives here), `links`, `scans`, `orders` (parked), `vertical_templates` (parked), `whatsapp_webhook_events` (M0 raw webhook inbox, deduped on `wa_message_id`; service role only).
 
 **What `business_id` points to is an open decision** (§15). Until it's settled, don't write Dobara migrations. Settle it in the first M1 schema prompt.
 
-Migrations go in `supabase/migrations/NNNN_name.sql` (next is `0009`), and `supabase/schema.sql` is kept in sync. Whenever a field is added or changed, keep the schema, the types, this section and `PRD.md` §10 in sync.
+Migrations go in `supabase/migrations/NNNN_name.sql` (next is `0010`), and `supabase/schema.sql` is kept in sync. Whenever a field is added or changed, keep the schema, the types, this section and `PRD.md` §10 in sync.
 
 ---
 
@@ -315,10 +315,11 @@ Only `NEXT_PUBLIC_*` values may reach browser code. Everything else is server-on
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role, for the documented anonymous/webhook/cron paths only | server only — configured |
 | `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Search Console verification, read by `lib/seo.ts` | client + server — not yet set |
 | `NEXT_PUBLIC_RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Parked Order Printed QR flow | client+server / server only |
-| `WHATSAPP_ACCESS_TOKEN` | Cloud API token for sending messages | server only — proposed, not yet set |
-| `WHATSAPP_PHONE_NUMBER_ID` | Sending number ID | server only — proposed, not yet set |
-| `WHATSAPP_APP_SECRET` | Verifies `X-Hub-Signature-256` | server only — proposed, not yet set |
-| `WHATSAPP_VERIFY_TOKEN` | Meta webhook GET verification | server only — proposed, not yet set |
+| `WHATSAPP_ACCESS_TOKEN` | Cloud API token for sending messages | server only — configured (temporary test token; replace with System User token) |
+| `WHATSAPP_PHONE_NUMBER_ID` | Sending number ID | server only — configured (Meta test number) |
+| `WHATSAPP_APP_SECRET` | Verifies `X-Hub-Signature-256` | server only — configured |
+| `WHATSAPP_VERIFY_TOKEN` | Meta webhook GET verification | server only — configured |
+| `WHATSAPP_GRAPH_VERSION` | Graph API version for Cloud API calls (default `v27.0`) | server only — optional |
 | `NEXT_PUBLIC_WHATSAPP_NUMBER` | Shared Dobara number for `wa.me` click-to-chat links | client + server — proposed, not yet set |
 | `DEVICE_COOKIE_SECRET` | Signs the customer device cookie | server only — proposed, not yet set |
 | `CRON_SECRET` | Authenticates scheduled-job routes | server only — proposed, not yet set |
