@@ -16,8 +16,11 @@ export type WaStatus = {
   timestamp?: string;
 };
 
+export type WaContact = { wa_id?: string; profile?: { name?: string } };
+
 export type WaChangeValue = {
   messaging_product?: string;
+  contacts?: WaContact[];
   metadata?: { display_phone_number?: string; phone_number_id?: string };
   messages?: WaInboundMessage[];
   statuses?: WaStatus[];
@@ -36,15 +39,22 @@ export function isWaWebhookPayload(value: unknown): value is WaWebhookPayload {
   return isObject(value) && value.object === "whatsapp_business_account";
 }
 
+/** An inbound message plus the sender's WhatsApp profile name (if sent). */
+export type WaInbound = WaInboundMessage & { profileName: string | null };
+
 /** Flattens entries → changes into the message/status lists we act on. */
 export function collectEvents(payload: WaWebhookPayload) {
-  const messages: WaInboundMessage[] = [];
+  const messages: WaInbound[] = [];
   const statuses: WaStatus[] = [];
   for (const entry of payload.entry ?? []) {
     for (const change of entry.changes ?? []) {
       if (change.field !== "messages" || !isObject(change.value)) continue;
+      const contacts = Array.isArray(change.value.contacts) ? change.value.contacts : [];
       for (const m of change.value.messages ?? []) {
-        if (isObject(m) && typeof m.id === "string" && typeof m.from === "string") messages.push(m);
+        if (!(isObject(m) && typeof m.id === "string" && typeof m.from === "string")) continue;
+        const contact = contacts.find((c) => isObject(c) && c.wa_id === m.from) ?? contacts[0];
+        const name = contact?.profile?.name;
+        messages.push({ ...m, profileName: typeof name === "string" ? name : null });
       }
       for (const s of change.value.statuses ?? []) {
         if (isObject(s) && typeof s.id === "string" && typeof s.status === "string") statuses.push(s);

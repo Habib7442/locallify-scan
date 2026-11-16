@@ -199,9 +199,9 @@ Indexes required: `customers(business_id, phone_e164)`, `table_sessions(business
 
 Existing tables still in the schema (`supabase/schema.sql`): `agencies`, `profiles`, `pages` (branding lives here), `links`, `scans`, `orders` (parked), `vertical_templates` (parked), `whatsapp_webhook_events` (M0 raw webhook inbox, deduped on `wa_message_id`; service role only).
 
-**`business_id` = `public.pages.id`** (decided 2026-11-16). `pages.clerk_org_id` links a cafe to its Clerk Organization; `org:admin` = Owner, `org:member` = Staff. RLS reads the **active org** from the Clerk JWT (v2 `o.id`/`o.rol`, v1 `org_id`/`org_role`) via `private.current_business_id()` / `private.jwt_org_role()`. PRD's `tables.qr_slug` is dropped — QR URLs use `pages.slug` + `tables.code`. M1 tables (migration `0010`): `tables`, `customers`, `table_sessions`, `session_members`, `message_log`, plus `scans.table_id`. Staff read customers only through `public.live_board_feed()` (masked phone) and write notes through `public.set_customer_note()`. Row types: `lib/supabase/dobara-types.ts`. Migration `0011` adds `session_members.wants_offers` (offers tick, copied to `customers.opted_in` only after WhatsApp verification) and `session_members.ip_hash` (hashed IP for rate limiting).
+**`business_id` = `public.pages.id`** (decided 2026-11-16). `pages.clerk_org_id` links a cafe to its Clerk Organization; `org:admin` = Owner, `org:member` = Staff. RLS reads the **active org** from the Clerk JWT (v2 `o.id`/`o.rol`, v1 `org_id`/`org_role`) via `private.current_business_id()` / `private.jwt_org_role()`. PRD's `tables.qr_slug` is dropped — QR URLs use `pages.slug` + `tables.code`. M1 tables (migration `0010`): `tables`, `customers`, `table_sessions`, `session_members`, `message_log`, plus `scans.table_id`. Staff read customers only through `public.live_board_feed()` (masked phone) and write notes through `public.set_customer_note()`. Row types: `lib/supabase/dobara-types.ts`. Migration `0011` adds `session_members.wants_offers` (offers tick, copied to `customers.opted_in` only after WhatsApp verification) and `session_members.ip_hash` (hashed IP for rate limiting). Migration `0012` adds `public.verify_member_code()` (atomic code match → customer upsert → member verified → visit counted once per session) and `public.record_visit()`, both service-role only.
 
-Migrations go in `supabase/migrations/NNNN_name.sql` (next is `0012`), and `supabase/schema.sql` is kept in sync. Whenever a field is added or changed, keep the schema, the types, this section and `PRD.md` §10 in sync.
+Migrations go in `supabase/migrations/NNNN_name.sql` (next is `0013`), and `supabase/schema.sql` is kept in sync. Whenever a field is added or changed, keep the schema, the types, this section and `PRD.md` §10 in sync.
 
 ---
 
@@ -223,7 +223,8 @@ Isolation is enforced in RLS, not just the UI. Staff and owners can only ever to
 - v1 uses **one shared number** under the Locallify Meta Business Portfolio, with the display name "Dobara by Locallify". Every message names the cafe ("Brew House: …").
 - **Click-to-chat first**: the customer sends the pre-filled message (`Hi Brew House 👋 (code: T4-7KQ2)`), which opens a 24-hour service window. Welcome messages, squad progress and scratch-card links go out as **service messages** inside that window.
 - Outbound messages outside the window must use approved templates (`PRD.md` §12): `dobara_prize_saved`, `dobara_prize_reminder`, `dobara_birthday`, `dobara_fill_tables`, `dobara_welcome_back`. Assume they're billed as marketing, at roughly ₹0.86–1.09 each.
-- Every marketing message ends with "Reply STOP to unsubscribe". An incoming "STOP", "band karo" or "unsubscribe" sets `opted_out_at` immediately.
+- Every marketing message ends with "Reply STOP to unsubscribe". An incoming "STOP", "band karo" or "unsubscribe" sets `opted_out_at` immediately — for **every cafe** that phone is a customer of, because the shared v1 number can't tell which cafe is meant.
+- "DELETE" asks for confirmation; "DELETE YES" within 10 minutes erases that phone's customer rows in every cafe and redacts it from the raw webhook inbox.
 - Log every inbound and outbound message, with its cost, in `message_log`. It drives allowances and admin cost reporting.
 - Opt-in on the scan page is explicit, unticked by default, and stored with a timestamp.
 

@@ -143,6 +143,16 @@ export default async function ScanPage({ params }: { params: Params }) {
           )}
         </section>
 
+        {state.kind !== "checked-in" ? (
+          // Back from WhatsApp → reload once so "You're checked in ✓" shows (no polling, no anon DB access).
+          <script
+            dangerouslySetInnerHTML={{
+              __html:
+                "document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden'){window.__dl=1}else if(window.__dl){location.reload()}});",
+            }}
+          />
+        ) : null}
+
         <footer className="mt-auto pt-8 text-center text-[13px] leading-relaxed" style={{ color: theme.muted }}>
           <p>{t.privacy(cafeName)}</p>
           <p className="mt-2">

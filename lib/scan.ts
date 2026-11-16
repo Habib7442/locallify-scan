@@ -289,5 +289,10 @@ export async function markHere(input: { cafeId: string; table: ScanTable; device
     console.error("markHere failed", error.message);
     return { kind: "error" };
   }
+  if (!error) {
+    // Count the visit once per session (migration 0012, idempotent).
+    const { error: visitError } = await supabase.rpc("record_visit", { p_customer_id: known.id, p_session_id: sessionId });
+    if (visitError) console.error("record_visit failed", visitError.message);
+  }
   return { kind: "checked-in" };
 }
