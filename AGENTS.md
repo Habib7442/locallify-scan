@@ -199,9 +199,9 @@ Indexes required: `customers(business_id, phone_e164)`, `table_sessions(business
 
 Existing tables still in the schema (`supabase/schema.sql`): `agencies`, `profiles`, `pages` (branding lives here), `links`, `scans`, `orders` (parked), `vertical_templates` (parked), `whatsapp_webhook_events` (M0 raw webhook inbox, deduped on `wa_message_id`; service role only).
 
-**What `business_id` points to is an open decision** (§15). Until it's settled, don't write Dobara migrations. Settle it in the first M1 schema prompt.
+**`business_id` = `public.pages.id`** (decided 2026-11-16). `pages.clerk_org_id` links a cafe to its Clerk Organization; `org:admin` = Owner, `org:member` = Staff. RLS reads the **active org** from the Clerk JWT (v2 `o.id`/`o.rol`, v1 `org_id`/`org_role`) via `private.current_business_id()` / `private.jwt_org_role()`. PRD's `tables.qr_slug` is dropped — QR URLs use `pages.slug` + `tables.code`. M1 tables (migration `0010`): `tables`, `customers`, `table_sessions`, `session_members`, `message_log`, plus `scans.table_id`. Staff read customers only through `public.live_board_feed()` (masked phone) and write notes through `public.set_customer_note()`. Row types: `lib/supabase/dobara-types.ts`.
 
-Migrations go in `supabase/migrations/NNNN_name.sql` (next is `0010`), and `supabase/schema.sql` is kept in sync. Whenever a field is added or changed, keep the schema, the types, this section and `PRD.md` §10 in sync.
+Migrations go in `supabase/migrations/NNNN_name.sql` (next is `0011`), and `supabase/schema.sql` is kept in sync. Whenever a field is added or changed, keep the schema, the types, this section and `PRD.md` §10 in sync.
 
 ---
 
@@ -332,8 +332,6 @@ Names marked "proposed" are confirmed or renamed in the prompt that first uses t
 
 Ask the user rather than assuming an answer to any of these:
 
-- **What `business_id` maps to.** The recommended default is to reuse the existing `pages` row as the business (it already holds branding and the slug) and add a `clerk_org_id`. The alternative is a new `businesses` table. Decide in the M1 schema prompt.
-- **How businesses get onboarded.** Only businesses (owners + their staff) ever sign in — never the general public (confirmed 2026-11-16). Still open: can a business self-sign-up, or does the Locallify admin onboard each one (`PRD.md` §7.9 and §19 "Locallify sets everything up in person")?
 - **Scratch cards for squads.** Does every squad member get their own scratch card, or only the bill payer? (Default: owner's choice.)
 - **No-WhatsApp fallback.** Should there be a printed "prize code" fallback for customers without WhatsApp?
 - **Live Board hardware.** Which budget tablet model, if any, should be recommended?
@@ -343,7 +341,7 @@ Ask the user rather than assuming an answer to any of these:
 - **Supabase region.** Confirm the existing project is in Mumbai (`PRD.md` §13), or plan a migration.
 - **Scheduled jobs.** Vercel Cron or Supabase pg_cron?
 
-**Resolved:** the redirect domain is `scan.locallifyagency.com` (table QR codes are `scan.locallifyagency.com/r/{business_slug}/t/{table_code}`); the QR library is `qr-code-styling`; messaging uses the WhatsApp Cloud API with one shared number in v1; Dobara is the main product (decided 2026-11-16); brand structure — Locallify Scan is the QR platform, **Dobara** ("by Locallify" in small text) is the product sold to restaurants (decided 2026-11-16).
+**Resolved:** `business_id` = the existing `pages` row + `clerk_org_id` (2026-11-16); owners **self-sign-up** and create their cafe (Clerk Organization) themselves — only owners and staff ever sign in (2026-11-16); the redirect domain is `scan.locallifyagency.com` (table QR codes are `scan.locallifyagency.com/r/{business_slug}/t/{table_code}`); the QR library is `qr-code-styling`; messaging uses the WhatsApp Cloud API with one shared number in v1; Dobara is the main product (decided 2026-11-16); brand structure — Locallify Scan is the QR platform, **Dobara** ("by Locallify" in small text) is the product sold to restaurants (decided 2026-11-16).
 
 ---
 

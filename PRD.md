@@ -291,6 +291,8 @@ Small and mid-size cafes and restaurants in towns like Silchar:
 ## 10. Data model (additions to Locallify Scan)
 
 > Adapt names to the existing Locallify Scan schema. Every table includes `business_id` and is protected by Supabase **row-level security** so one business can never read another's data.
+>
+> **Implemented mapping (M1, migration 0010):** `business_id` = `pages.id` (the existing Locallify Scan page row holds the cafe's name, slug and branding) with `pages.clerk_org_id` linking it to the cafe's Clerk Organization. `tables.qr_slug` is not used — QR URLs are `/r/{pages.slug}/t/{tables.code}`. `message_log.business_id` is nullable until an inbound message is matched to a cafe.
 
 ```sql
 -- Tables in the restaurant
