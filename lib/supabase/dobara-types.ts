@@ -71,11 +71,47 @@ export type MessageLogRow = {
   created_at: string;
 };
 
-/** Row returned by public.live_board_feed() — phone already masked. */
+export type PrizeStatus = "unscratched" | "active" | "redeemed" | "expired";
+
+export type PrizeOption = { label: string; weight: number };
+
+export type RewardSettingsRow = {
+  business_id: BusinessId;
+  scratch_enabled: boolean;
+  scratch_min_bill: number;
+  prize_validity_days: number;
+  reminder_enabled: boolean;
+  scratch_all_members: boolean;
+  prizes: PrizeOption[];
+  squad_enabled: boolean;
+  squad_reward_text: string | null;
+  squad_min_size: number;
+  updated_at: string;
+};
+
+export type PrizeRow = {
+  id: string;
+  business_id: BusinessId;
+  customer_id: string;
+  session_id: string;
+  label: string;
+  code: string;
+  status: PrizeStatus;
+  valid_from: string;
+  valid_until: string;
+  revealed_at: string | null;
+  redeemed_at: string | null;
+  redeemed_by: string | null;
+  redeemed_session_id: string | null;
+  created_at: string;
+};
+
+/** Row returned by public.live_board_feed() (0013) — phone already masked. */
 export type LiveBoardFeedRow = {
   member_id: string;
   session_id: string;
   session_status: SessionStatus;
+  bill_amount: number | null;
   table_code: string;
   table_label: string | null;
   joined_at: string;
@@ -86,4 +122,9 @@ export type LiveBoardFeedRow = {
   visit_count: number | null;
   last_visit_at: string | null;
   notes: string | null;
+  prize_id: string | null;
+  prize_label: string | null;
+  prize_status: PrizeStatus | null;
+  prize_valid_until: string | null;
+  prize_session_id: string | null;
 };

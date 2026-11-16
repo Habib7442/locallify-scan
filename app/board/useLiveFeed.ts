@@ -71,6 +71,16 @@ export function useLiveFeed(businessId: string, onArrivals: (rows: LiveBoardFeed
           { event: "*", schema: "public", table: "session_members", filter: `business_id=eq.${businessId}` },
           scheduleFetch,
         )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "table_sessions", filter: `business_id=eq.${businessId}` },
+          scheduleFetch,
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "prizes", filter: `business_id=eq.${businessId}` },
+          scheduleFetch,
+        )
         .subscribe((s) => {
           if (disposed) return;
           if (s === "SUBSCRIBED") {

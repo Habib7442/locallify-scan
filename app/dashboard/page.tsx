@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MonitorSmartphone, Printer } from "lucide-react";
+import { Gift, MonitorSmartphone, Printer } from "lucide-react";
+import { getPrizeCounts } from "@/lib/prizes";
 import { btn } from "@/components/landing/primitives";
 import { getCurrentBusiness, getOrgContext, listTables } from "@/lib/business";
 import { OwnerShell, panelClass } from "@/components/owner/OwnerShell";
@@ -20,7 +21,7 @@ export default async function DashboardPage() {
   const business = await getCurrentBusiness(ctx.orgId);
   if (!business || !business.onboarded_at) redirect("/onboarding");
 
-  const tables = await listTables(business.id);
+  const [tables, counts] = await Promise.all([listTables(business.id), getPrizeCounts(business.id)]);
   const base = `${SITE_URL}/r/${business.slug}`;
 
   return (
@@ -38,6 +39,20 @@ export default async function DashboardPage() {
         <div className="flex items-center gap-3">
           <MonitorSmartphone className="size-5 text-[#54e0ff]" aria-hidden />
           <span className="text-[16px]">{copy.board}</span>
+        </div>
+        <span aria-hidden className="text-[20px] text-[#9a9aa3]">→</span>
+      </Link>
+
+      <Link
+        href="/dashboard/rewards"
+        className={`${panelClass} mt-3 flex items-center justify-between gap-4 transition-colors hover:border-[#54e0ff]/40`}
+      >
+        <div className="flex items-center gap-3">
+          <Gift className="size-5 text-[#54e0ff]" aria-hidden />
+          <span>
+            <span className="block text-[16px]">{copy.rewards}</span>
+            <span className="block text-[14px] text-[#9a9aa3]">{copy.rewardsLine(counts.month.issued, counts.month.redeemed)}</span>
+          </span>
         </div>
         <span aria-hidden className="text-[20px] text-[#9a9aa3]">→</span>
       </Link>

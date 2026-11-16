@@ -6,11 +6,16 @@ import { getDeviceState, logScan, resolveCafeTable } from "@/lib/scan";
 import { scanTheme } from "@/lib/scan-theme";
 import { isBotUserAgent } from "@/lib/bots";
 import { scanMessages } from "@/messages/scan";
+import { ScratchCard } from "./ScratchCard";
 
 // Customer scan page (PRD §7.2). Server-rendered, no client JS of its own,
 // plain HTML forms. No login. Writes on GET: one scan-log row (non-bots).
 
 type Params = Promise<{ business: string; table: string }>;
+
+function formatDay(iso: string) {
+  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
+}
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +49,10 @@ export default async function ScanPage({ params }: { params: Params }) {
   const theme = scanTheme(cafe);
   const cafeName = cafe.display_name ?? "this cafe";
   const tableName = t.table(table.code);
+
+  const prizes = state.kind === "new" ? [] : state.prizes;
+  const newPrize = prizes.find((p) => p.state === "unscratched") ?? null;
+  const shownPrizes = prizes.filter((p) => p.state !== "unscratched" && p.label);
 
   const buttonStyle = { backgroundColor: theme.buttonBg, color: theme.buttonText };
   const cardBg = theme.light ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.35)";
@@ -93,7 +102,7 @@ export default async function ScanPage({ params }: { params: Params }) {
             </>
           ) : state.kind === "returning" ? (
             <>
-              <h2 className="text-[22px] leading-snug font-semibold">{t.welcomeBack(state.name)}</h2>
+              <h2 className="text-[22px] leading-snug font-semibold">{t.welcomeBack(state.customer.name)}</h2>
               <p className="mt-2 text-[16px] leading-relaxed" style={{ color: theme.muted }}>
                 {t.returningLine}
               </p>
@@ -143,6 +152,79 @@ export default async function ScanPage({ params }: { params: Params }) {
             </>
           )}
         </section>
+
+        {state.kind !== "new" ? (
+          <>
+            {newPrize ? (
+              <section className="mt-4 rounded-2xl p-5" style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}>
+                <h2 className="text-[20px] leading-snug font-semibold">{t.prizeWonTitle}</h2>
+                <p className="mt-1 mb-4 text-[15px]" style={{ color: theme.muted }}>
+                  {t.prizeWonLine}
+                </p>
+                <ScratchCard
+                  prizeId={newPrize.id}
+                  accent={theme.buttonBg}
+                  accentText={theme.buttonText}
+                  labels={{
+                    scratchHint: t.scratchHint,
+                    tapToReveal: t.tapToReveal,
+                    revealing: t.revealing,
+                    validTill: t.validTill("").trim(),
+                    prizeCode: t.prizeCode("").trim(),
+                    showAtCounter: t.showAtCounter,
+                    failed: t.prizeRevealFailed,
+                  }}
+                />
+              </section>
+            ) : null}
+
+            {shownPrizes.length > 0 ? (
+              <section className="mt-4 rounded-2xl p-5" style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}>
+                <h2 className="text-[18px] font-semibold">{t.yourPrizes}</h2>
+                <ul className="mt-3 space-y-3">
+                  {shownPrizes.map((p) => (
+                    <li key={p.id} className="text-[16px]">
+                      <span className="font-medium">🎟️ {p.label}</span>
+                      <span className="block text-[14px]" style={{ color: theme.muted }}>
+                        {p.state === "active"
+                          ? `${t.validTill(formatDay(p.validUntil))} · ${t.prizeCode(p.code ?? "")} · ${t.showAtCounter}`
+                          : p.state === "redeemed"
+                            ? t.prizeUsed(formatDay(p.redeemedAt ?? p.validUntil))
+                            : t.prizeExpired}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            <details className="mt-4 text-[15px]" open={!state.customer.name}>
+              <summary className="min-h-12 cursor-pointer py-3" style={{ color: theme.muted }}>
+                {state.customer.name ? t.notYourName(state.customer.name.split(" ")[0] ?? "") : t.askName}
+              </summary>
+              <form method="post" action="/api/scan/name" className="flex gap-2">
+                <input type="hidden" name="business" value={cafe.slug} />
+                <input type="hidden" name="table" value={table.code} />
+                <label className="sr-only" htmlFor="diner-name">
+                  {t.nameLabel}
+                </label>
+                <input
+                  id="diner-name"
+                  name="name"
+                  required
+                  maxLength={40}
+                  autoComplete="given-name"
+                  defaultValue={state.customer.name ?? ""}
+                  className="h-12 min-w-0 flex-1 rounded-[12px] border px-3 text-[16px] text-[#18181a]"
+                  style={{ borderColor: cardBorder }}
+                />
+                <button type="submit" className="h-12 rounded-[12px] px-4 font-semibold" style={buttonStyle}>
+                  {t.nameSave}
+                </button>
+              </form>
+            </details>
+          </>
+        ) : null}
 
         {state.kind !== "checked-in" ? (
           // Back from WhatsApp → reload once so "You're checked in ✓" shows (no polling, no anon DB access).

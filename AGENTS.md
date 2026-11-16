@@ -199,9 +199,9 @@ Indexes required: `customers(business_id, phone_e164)`, `table_sessions(business
 
 Existing tables still in the schema (`supabase/schema.sql`): `agencies`, `profiles`, `pages` (branding lives here), `links`, `scans`, `orders` (parked), `vertical_templates` (parked), `whatsapp_webhook_events` (M0 raw webhook inbox, deduped on `wa_message_id`; service role only).
 
-**`business_id` = `public.pages.id`** (decided 2026-11-16). `pages.clerk_org_id` links a cafe to its Clerk Organization; `org:admin` = Owner, `org:member` = Staff. RLS reads the **active org** from the Clerk JWT (v2 `o.id`/`o.rol`, v1 `org_id`/`org_role`) via `private.current_business_id()` / `private.jwt_org_role()`. PRD's `tables.qr_slug` is dropped — QR URLs use `pages.slug` + `tables.code`. M1 tables (migration `0010`): `tables`, `customers`, `table_sessions`, `session_members`, `message_log`, plus `scans.table_id`. Staff read customers only through `public.live_board_feed()` (masked phone) and write notes through `public.set_customer_note()`. Row types: `lib/supabase/dobara-types.ts`. Migration `0011` adds `session_members.wants_offers` (offers tick, copied to `customers.opted_in` only after WhatsApp verification) and `session_members.ip_hash` (hashed IP for rate limiting). Migration `0012` adds `public.verify_member_code()` (atomic code match → customer upsert → member verified → visit counted once per session) and `public.record_visit()`, both service-role only.
+**`business_id` = `public.pages.id`** (decided 2026-11-16). `pages.clerk_org_id` links a cafe to its Clerk Organization; `org:admin` = Owner, `org:member` = Staff. RLS reads the **active org** from the Clerk JWT (v2 `o.id`/`o.rol`, v1 `org_id`/`org_role`) via `private.current_business_id()` / `private.jwt_org_role()`. PRD's `tables.qr_slug` is dropped — QR URLs use `pages.slug` + `tables.code`. M1 tables (migration `0010`): `tables`, `customers`, `table_sessions`, `session_members`, `message_log`, plus `scans.table_id`. Staff read customers only through `public.live_board_feed()` (masked phone) and write notes through `public.set_customer_note()`. Row types: `lib/supabase/dobara-types.ts`. Migration `0011` adds `session_members.wants_offers` (offers tick, copied to `customers.opted_in` only after WhatsApp verification) and `session_members.ip_hash` (hashed IP for rate limiting). Migration `0012` adds `public.verify_member_code()` (atomic code match → customer upsert → member verified → visit counted once per session) and `public.record_visit()`, both service-role only. Migration `0013` adds `reward_settings` (one row per cafe; owner edits) and `prizes` (status unscratched/active/redeemed/expired, 6-char code unique per cafe, one per customer per visit), plus staff RPCs `close_visit()` (bill amount → server-side weighted draw → scratch cards), `redeem_prize()` (only on a later visit, before expiry) and `set_customer_name()`; `live_board_feed()` now also returns the bill amount and each customer's best open prize.
 
-Migrations go in `supabase/migrations/NNNN_name.sql` (next is `0013`), and `supabase/schema.sql` is kept in sync. Whenever a field is added or changed, keep the schema, the types, this section and `PRD.md` §10 in sync.
+Migrations go in `supabase/migrations/NNNN_name.sql` (next is `0014`), and `supabase/schema.sql` is kept in sync. Whenever a field is added or changed, keep the schema, the types, this section and `PRD.md` §10 in sync.
 
 ---
 
@@ -333,7 +333,6 @@ Names marked "proposed" are confirmed or renamed in the prompt that first uses t
 
 Ask the user rather than assuming an answer to any of these:
 
-- **Scratch cards for squads.** Does every squad member get their own scratch card, or only the bill payer? (Default: owner's choice.)
 - **No-WhatsApp fallback.** Should there be a printed "prize code" fallback for customers without WhatsApp?
 - **Live Board hardware.** Which budget tablet model, if any, should be recommended?
 - **Message overage billing.** Prepaid credits or a post-paid invoice?
@@ -342,7 +341,7 @@ Ask the user rather than assuming an answer to any of these:
 - **Supabase region.** Confirm the existing project is in Mumbai (`PRD.md` §13), or plan a migration.
 - **Scheduled jobs.** Vercel Cron or Supabase pg_cron?
 
-**Resolved:** `business_id` = the existing `pages` row + `clerk_org_id` (2026-11-16); owners **self-sign-up** and create their cafe (Clerk Organization) themselves — only owners and staff ever sign in (2026-11-16); the redirect domain is `scan.locallifyagency.com` (table QR codes are `scan.locallifyagency.com/r/{business_slug}/t/{table_code}`); the QR library is `qr-code-styling`; messaging uses the WhatsApp Cloud API with one shared number in v1; Dobara is the main product (decided 2026-11-16); brand structure — Locallify Scan is the QR platform, **Dobara** ("by Locallify" in small text) is the product sold to restaurants (decided 2026-11-16).
+**Resolved:** scratch cards for squads are the owner's choice — `reward_settings.scratch_all_members`, default every verified member gets one (2026-11-17); `business_id` = the existing `pages` row + `clerk_org_id` (2026-11-16); owners **self-sign-up** and create their cafe (Clerk Organization) themselves — only owners and staff ever sign in (2026-11-16); the redirect domain is `scan.locallifyagency.com` (table QR codes are `scan.locallifyagency.com/r/{business_slug}/t/{table_code}`); the QR library is `qr-code-styling`; messaging uses the WhatsApp Cloud API with one shared number in v1; Dobara is the main product (decided 2026-11-16); brand structure — Locallify Scan is the QR platform, **Dobara** ("by Locallify" in small text) is the product sold to restaurants (decided 2026-11-16).
 
 ---
 

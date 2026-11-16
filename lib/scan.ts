@@ -74,12 +74,25 @@ export async function logScan(cafeId: string, tableId: string, ua: string | null
 
 // ------------------------------------------------------------ device state
 
+/** A prize as the diner may see it. Label/code stay hidden until revealed. */
+export type ScanPrize = {
+  id: string;
+  state: "unscratched" | "active" | "redeemed" | "expired";
+  label: string | null; // null while unscratched (outcome stays server-side)
+  code: string | null;
+  validUntil: string;
+  redeemedAt: string | null;
+};
+
+type KnownCustomer = { id: string; name: string | null };
+
 export type DeviceState =
   | { kind: "new" }
-  | { kind: "returning"; name: string | null }
-  | { kind: "checked-in"; name: string | null };
+  | { kind: "returning"; customer: KnownCustomer; prizes: ScanPrize[] }
+  | { kind: "checked-in"; customer: KnownCustomer; prizes: ScanPrize[] };
 
-async function knownCustomerForDevice(cafeId: string, deviceId: string): Promise<{ id: string; name: string | null } | null> {
+/** The WhatsApp-verified customer this device belongs to at this cafe, if any. */
+export async function knownCustomerForDevice(cafeId: string, deviceId: string): Promise<KnownCustomer | null> {
   const supabase = db();
   const { data: member } = await supabase
     .from("session_members")
@@ -123,22 +136,98 @@ async function findLiveSession(tableId: string): Promise<{ id: string; opened_at
   return s;
 }
 
+const PRIZE_SHOW_DAYS = 7;
+
+/** The diner's recent prizes at this cafe (open ones + recently used/expired). */
+export async function prizesForCustomer(cafeId: string, customerId: string): Promise<ScanPrize[]> {
+  const since = new Date(Date.now() - PRIZE_SHOW_DAYS * 86_400_000).toISOString();
+  const { data, error } = await db()
+    .from("prizes")
+    .select("id, status, label, code, valid_until, redeemed_at")
+    .eq("business_id", cafeId)
+    .eq("customer_id", customerId)
+    .or(`status.in.(unscratched,active),redeemed_at.gte.${since},valid_until.gte.${since}`)
+    .order("created_at", { ascending: false })
+    .limit(5);
+  if (error) {
+    console.error("prizesForCustomer failed", error.message);
+    return [];
+  }
+  const now = Date.now();
+  return (data ?? []).map((p: { id: string; status: ScanPrize["state"]; label: string; code: string; valid_until: string; redeemed_at: string | null }) => {
+    const lapsed = (p.status === "unscratched" || p.status === "active") && new Date(p.valid_until).getTime() < now;
+    const state: ScanPrize["state"] = lapsed ? "expired" : p.status;
+    const hidden = state === "unscratched";
+    return {
+      id: p.id,
+      state,
+      label: hidden ? null : p.label,
+      code: hidden ? null : p.code,
+      validUntil: p.valid_until,
+      redeemedAt: p.redeemed_at,
+    };
+  });
+}
+
 export async function getDeviceState(cafeId: string, tableId: string, deviceId: string | null): Promise<DeviceState> {
   if (!deviceId) return { kind: "new" };
   const [known, session] = await Promise.all([knownCustomerForDevice(cafeId, deviceId), findLiveSession(tableId)]);
+  if (!known) return { kind: "new" };
 
-  if (session) {
-    const { data: member } = await db()
-      .from("session_members")
-      .select("verified_at")
-      .eq("session_id", session.id)
-      .eq("device_id", deviceId)
-      .maybeSingle();
-    if ((member as { verified_at: string | null } | null)?.verified_at) {
-      return { kind: "checked-in", name: known?.name ?? null };
+  const [prizes, member] = await Promise.all([
+    prizesForCustomer(cafeId, known.id),
+    session
+      ? db().from("session_members").select("verified_at").eq("session_id", session.id).eq("device_id", deviceId).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  const checkedIn = Boolean((member.data as { verified_at: string | null } | null)?.verified_at);
+  return { kind: checkedIn ? "checked-in" : "returning", customer: known, prizes };
+}
+
+/** Reveal (scratch) one of this device's own prizes. Returns what to show. */
+export async function revealPrize(input: { prizeId: string; deviceId: string }): Promise<ScanPrize | null> {
+  const supabase = db();
+  const { data: prize } = await supabase
+    .from("prizes")
+    .select("id, business_id, customer_id, status, label, code, valid_until, redeemed_at")
+    .eq("id", input.prizeId)
+    .maybeSingle();
+  const p = prize as {
+    id: string; business_id: string; customer_id: string; status: ScanPrize["state"];
+    label: string; code: string; valid_until: string; redeemed_at: string | null;
+  } | null;
+  if (!p) return null;
+
+  // Only the customer linked to this signed device at this cafe may reveal it.
+  const known = await knownCustomerForDevice(p.business_id, input.deviceId);
+  if (!known || known.id !== p.customer_id) return null;
+
+  let state = p.status;
+  if (p.status === "unscratched") {
+    const { error } = await supabase
+      .from("prizes")
+      .update({ status: "active", revealed_at: new Date().toISOString() })
+      .eq("id", p.id)
+      .eq("status", "unscratched");
+    if (error) {
+      console.error("revealPrize failed", error.message);
+      return null;
     }
+    state = "active";
   }
-  return known ? { kind: "returning", name: known.name } : { kind: "new" };
+  if ((state === "active" || state === "unscratched") && new Date(p.valid_until).getTime() < Date.now()) state = "expired";
+  return { id: p.id, state, label: p.label, code: p.code, validUntil: p.valid_until, redeemedAt: p.redeemed_at };
+}
+
+/** Diner corrects their own name (device-linked customer at this cafe only). */
+export async function setOwnName(input: { cafeId: string; deviceId: string; name: string }): Promise<boolean> {
+  const known = await knownCustomerForDevice(input.cafeId, input.deviceId);
+  if (!known) return false;
+  const name = input.name.trim().slice(0, 40);
+  if (name.length < 1) return false;
+  const { error } = await db().from("customers").update({ name }).eq("id", known.id).eq("business_id", input.cafeId);
+  if (error) console.error("setOwnName failed", error.message);
+  return !error;
 }
 
 // ---------------------------------------------------------- rate limiting

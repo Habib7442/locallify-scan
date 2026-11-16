@@ -79,6 +79,8 @@ export const dashboard = {
   addLabel: "Total tables",
   addSubmit: "Update tables",
   board: "Open Live Board",
+  rewards: "Rewards & prizes",
+  rewardsLine: (issued: number, redeemed: number) => `${issued} prizes given · ${redeemed} used this month`,
   noTables: "No tables yet.",
 } as const;
 
@@ -86,4 +88,36 @@ export const board = {
   title: "Live Board",
   line: "The counter screen that dings when a regular scans is coming soon.",
   notMember: "You're not part of a cafe yet. Ask your cafe owner to invite you.",
+} as const;
+
+export const rewards = {
+  back: "Back",
+  title: "Rewards",
+  line: "After a table pays, each customer scratches a card. The prize only works on their next visit.",
+  enabled: "Scratch cards",
+  enabledHelp: "Give a next-visit prize when a visit is closed.",
+  allMembers: "Everyone at the table gets a card",
+  allMembersHelp: "Off = only the first person who checked in.",
+  minBill: "Minimum bill (₹)",
+  validity: "Prize valid for (days)",
+  prizesTitle: "Prizes and chances",
+  prizesHelp: "Higher number = more likely. The % shows each prize's chance.",
+  prizeLabel: "Prize",
+  prizePlaceholder: "e.g. Free Cold Coffee",
+  weight: "Chance",
+  chance: "Chance",
+  remove: "Remove prize",
+  add: "Add prize",
+  save: "Save rewards",
+  saved: "Saved ✓",
+  counts: { issued: "Issued this month", redeemed: "Used this month", expired: "Expired this month" },
+  allTime: (n: number) => `${n} all time`,
+  errors: {
+    notOwner: "Only the cafe owner can change rewards.",
+    minBill: "Minimum bill must be between ₹0 and ₹1,00,000.",
+    validity: "Validity must be 1 to 90 days.",
+    prizeCount: "Add between 1 and 8 prizes.",
+    weight: "Each chance must be a whole number from 1 to 100.",
+    generic: "Something went wrong. Please try again.",
+  },
 } as const;

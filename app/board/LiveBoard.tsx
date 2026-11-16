@@ -8,6 +8,8 @@ import type { LiveBoardFeedRow } from "@/lib/supabase/dobara-types";
 import { useLiveFeed, type ConnectionStatus } from "./useLiveFeed";
 import { armChime, isChimeReady, playChime } from "./chime";
 import { NoteSheet } from "./NoteSheet";
+import { CloseVisitSheet, NameSheet, withRetry } from "./ActionSheets";
+import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const FLASH_MS = 10_000;
 const SOUND_KEY = "dobara.board.sound";
@@ -30,6 +32,10 @@ function readSoundPref(): boolean {
   } catch {
     return true; // Storage blocked — default to sound on.
   }
+}
+
+function formatDay(iso: string) {
+  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
 }
 
 function minutesSince(iso: string, now: number): number {
@@ -59,6 +65,11 @@ export function LiveBoard({ businessId, cafeName }: { businessId: string; cafeNa
   const [flash, setFlash] = useState<Set<string>>(() => new Set());
   const [now, setNow] = useState(() => Date.now());
   const [noteFor, setNoteFor] = useState<LiveBoardFeedRow | null>(null);
+  const [nameFor, setNameFor] = useState<LiveBoardFeedRow | null>(null);
+  const [closeFor, setCloseFor] = useState<{ sessionId: string; tableName: string } | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [redeeming, setRedeeming] = useState<string | null>(null);
+  const supabase = useSupabaseBrowserClient();
   const wakeLock = useRef<WakeLockSentinelLike | null>(null);
   const soundRef = useRef(sound);
   const flashTimers = useRef<Set<number>>(new Set());
@@ -167,16 +178,30 @@ export function LiveBoard({ businessId, cafeName }: { businessId: string; cafeNa
   );
 
   const tables = useMemo(() => {
-    const map = new Map<string, { code: string; label: string | null; people: LiveBoardFeedRow[]; waiting: number }>();
+    const map = new Map<string, { sessionId: string; code: string; label: string | null; people: LiveBoardFeedRow[]; waiting: number }>();
     for (const r of rows) {
       if (r.session_status !== "open" && r.session_status !== "billing") continue;
-      const entry = map.get(r.session_id) ?? { code: r.table_code, label: r.table_label, people: [], waiting: 0 };
+      const entry = map.get(r.session_id) ?? { sessionId: r.session_id, code: r.table_code, label: r.table_label, people: [], waiting: 0 };
       if (r.verified_at) entry.people.push(r);
       else entry.waiting += 1;
       map.set(r.session_id, entry);
     }
     return [...map.values()].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
   }, [rows]);
+
+  function showToast(message: string) {
+    setToast(message);
+    window.setTimeout(() => setToast((t) => (t === message ? null : t)), 6_000);
+  }
+
+  async function redeem(r: LiveBoardFeedRow) {
+    if (!r.prize_id || redeeming) return;
+    setRedeeming(r.prize_id);
+    const { error } = await withRetry(() => supabase.rpc("redeem_prize", { p_prize_id: r.prize_id }));
+    setRedeeming(null);
+    showToast(error ? copy.redeemFailed(error.message) : `${copy.redeemed} · ${r.prize_label ?? ""}`);
+    void refetch();
+  }
 
   if (!started) {
     return (
@@ -241,35 +266,60 @@ export function LiveBoard({ businessId, cafeName }: { businessId: string; cafeNa
               const name = r.customer_name ?? copy.guest;
               const visits = r.visit_count ?? 1;
               return (
-                <li key={r.member_id}>
+                <li
+                  key={r.member_id}
+                  className={`rounded-2xl border p-4 transition-colors ${
+                    isNew ? "border-[#54e0ff] bg-[#54e0ff]/10" : "border-white/10 bg-white/[0.02]"
+                  }`}
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-[22px] font-medium tracking-[-0.03em]">
+                      {isNew ? "🔔 " : ""}
+                      {copy.table(r.table_code)} ·{" "}
+                      <button
+                        type="button"
+                        onClick={() => r.customer_id && setNameFor(r)}
+                        className={`rounded underline decoration-white/20 underline-offset-4 ${focusRing}`}
+                      >
+                        {name}
+                      </button>
+                    </span>
+                    <span className="shrink-0 text-[13px] text-[#8b8b94]">{copy.ago(minutesSince(r.verified_at ?? r.joined_at, now))}</span>
+                  </div>
+                  <p className="mt-1 text-[15px] text-[#9a9aa3]">
+                    {visits <= 1 ? copy.newCustomer : copy.visit(visits)}
+                    {r.phone_last4 ? ` · …${r.phone_last4}` : ""}
+                  </p>
                   <button
                     type="button"
                     onClick={() => r.customer_id && setNoteFor(r)}
-                    className={`w-full rounded-2xl border p-4 text-left transition-colors ${focusRing} ${
-                      isNew ? "border-[#54e0ff] bg-[#54e0ff]/10" : "border-white/10 bg-white/[0.02] hover:bg-white/[0.05]"
-                    }`}
+                    className={`mt-2 block w-full rounded text-left text-[15px] ${r.notes ? "text-white" : "text-[#8b8b94]"} ${focusRing}`}
                   >
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-[22px] font-medium tracking-[-0.03em]">
-                        {isNew ? "🔔 " : ""}
-                        {copy.table(r.table_code)} · {name}
-                      </span>
-                      <span className="shrink-0 text-[13px] text-[#8b8b94]">{copy.ago(minutesSince(r.verified_at ?? r.joined_at, now))}</span>
-                    </div>
-                    <p className="mt-1 text-[15px] text-[#9a9aa3]">
-                      {visits <= 1 ? copy.newCustomer : copy.visit(visits)}
-                      {r.phone_last4 ? ` · …${r.phone_last4}` : ""}
-                    </p>
-                    <p className={`mt-2 text-[15px] ${r.notes ? "text-white" : "text-[#8b8b94]"}`}>
-                      {r.notes ? (
-                        <>
-                          <span className="text-[13px] text-[#8b8b94]">{copy.noteAbout(name)}: </span>📝 {r.notes}
-                        </>
-                      ) : (
-                        `+ ${copy.addNote}`
-                      )}
-                    </p>
+                    {r.notes ? (
+                      <>
+                        <span className="text-[13px] text-[#8b8b94]">{copy.noteAbout(name)}: </span>📝 {r.notes}
+                      </>
+                    ) : (
+                      `+ ${copy.addNote}`
+                    )}
                   </button>
+                  {r.prize_id && r.prize_label && r.prize_valid_until ? (
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+                      <span className="text-[15px]">{copy.hasPrize(r.prize_label, formatDay(r.prize_valid_until))}</span>
+                      {r.prize_session_id !== r.session_id ? (
+                        <button
+                          type="button"
+                          onClick={() => void redeem(r)}
+                          disabled={redeeming === r.prize_id}
+                          className={`${btn.primary} h-10 px-4 text-[15px] shadow-none disabled:opacity-60`}
+                        >
+                          {redeeming === r.prize_id ? "…" : copy.redeem}
+                        </button>
+                      ) : (
+                        <span className="text-[13px] text-[#8b8b94]">{copy.redeemSameVisit}</span>
+                      )}
+                    </div>
+                  ) : null}
                 </li>
               );
             })}
@@ -286,12 +336,19 @@ export function LiveBoard({ businessId, cafeName }: { businessId: string; cafeNa
         ) : (
           <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {tables.map((t) => (
-              <li key={t.code} className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+              <li key={t.sessionId} className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-4">
                 <p className="text-[18px] font-medium">{copy.table(t.code)}</p>
                 <p className="mt-1 text-[15px] text-[#9a9aa3]">
                   {t.people.map((p) => p.customer_name ?? copy.guest).join(", ") || "—"}
                 </p>
                 {t.waiting > 0 ? <p className="mt-1 text-[14px] text-amber-300">{copy.waiting(t.waiting)}</p> : null}
+                <button
+                  type="button"
+                  onClick={() => setCloseFor({ sessionId: t.sessionId, tableName: copy.table(t.code) })}
+                  className={`${btn.secondary} mt-3 h-11 text-[15px]`}
+                >
+                  {copy.closeVisit}
+                </button>
               </li>
             ))}
           </ul>
@@ -306,6 +363,33 @@ export function LiveBoard({ businessId, cafeName }: { businessId: string; cafeNa
           onClose={() => setNoteFor(null)}
           onSaved={() => void refetch()}
         />
+      ) : null}
+
+      {nameFor?.customer_id ? (
+        <NameSheet
+          customerId={nameFor.customer_id}
+          currentName={nameFor.customer_name ?? ""}
+          onClose={() => setNameFor(null)}
+          onSaved={() => void refetch()}
+        />
+      ) : null}
+
+      {closeFor ? (
+        <CloseVisitSheet
+          sessionId={closeFor.sessionId}
+          tableName={closeFor.tableName}
+          onClose={() => setCloseFor(null)}
+          onDone={(issued) => {
+            showToast(copy.cardsSent(issued, closeFor.tableName));
+            void refetch();
+          }}
+        />
+      ) : null}
+
+      {toast ? (
+        <div role="status" className="fixed inset-x-4 bottom-4 z-40 mx-auto max-w-[480px] rounded-2xl border border-white/10 bg-[#28282b] px-4 py-3 text-[15px] shadow-lg">
+          {toast}
+        </div>
       ) : null}
 
       <p className="mt-10 text-center text-[13px] text-[#8b8b94]">{cafeName} · Dobara by Locallify</p>

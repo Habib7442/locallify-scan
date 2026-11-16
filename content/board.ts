@@ -32,6 +32,23 @@ export const board = {
   tapForSound: "🔊 Tap anywhere to turn on sound",
   editNote: "Edit note",
   notMember: "You're not part of a cafe yet. Ask your cafe owner to invite you.",
+  closeVisit: "Close visit",
+  closeTitle: (table: string) => `Close visit · ${table}`,
+  billLabel: "Bill amount",
+  billInvalid: "Enter the bill amount in rupees.",
+  closeConfirm: "Close visit",
+  alreadyClosed: "This visit is already closed.",
+  actionFailed: "Couldn't save. Check the internet and try again.",
+  cancel: "Cancel",
+  save: "Save",
+  nameTitle: "Customer's name",
+  cardsSent: (n: number, table: string) =>
+    n === 0 ? `${table} closed. No scratch card (bill below minimum or cards off).` : `${table} closed. ${n} scratch card${n === 1 ? "" : "s"} sent 🎁`,
+  hasPrize: (label: string, until: string) => `🎟️ Has: ${label} (till ${until})`,
+  redeem: "Redeem",
+  redeemed: "Redeemed ✓",
+  redeemSameVisit: "Can be used from the next visit",
+  redeemFailed: (reason: string) => `Couldn't redeem: ${reason}`,
 } as const;
 
 function ordinal(n: number): string {
