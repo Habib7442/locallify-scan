@@ -13,10 +13,12 @@ export async function POST(req: NextRequest) {
   if (!post) return scanMessagePage("error", null, 400);
   if (!post.deviceId) return NextResponse.redirect(new URL(post.backUrl, req.url), 303);
 
-  const found = await resolveCafeTable(post.slug, post.tableCode);
+  const [found, limited] = await Promise.all([
+    resolveCafeTable(post.slug, post.tableCode),
+    isRateLimited(post.deviceId, post.ipHash),
+  ]);
   if (!found) return scanMessagePage("error", null, 404);
-
-  if (await isRateLimited(post.deviceId, post.ipHash)) return scanMessagePage("slow", post.backUrl, 429);
+  if (limited) return scanMessagePage("slow", post.backUrl, 429);
 
   const result = await markHere({ cafeId: found.cafe.id, table: found.table, deviceId: post.deviceId, ipHash: post.ipHash });
   if (result.kind === "error") return scanMessagePage("error", post.backUrl, 500);

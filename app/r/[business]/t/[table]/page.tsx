@@ -34,10 +34,11 @@ export default async function ScanPage({ params }: { params: Params }) {
 
   const [cookieStore, h] = await Promise.all([cookies(), headers()]);
   const ua = h.get("user-agent");
-  if (!isBotUserAgent(ua)) await logScan(cafe.id, table.id, ua, h.get("referer"));
-
   const deviceId = await verifyDeviceCookie(cookieStore.get(DEVICE_COOKIE)?.value);
-  const state = await getDeviceState(cafe.id, table.id, deviceId);
+  const [state] = await Promise.all([
+    getDeviceState(cafe.id, table.id, deviceId),
+    isBotUserAgent(ua) ? Promise.resolve() : logScan(cafe.id, table.id, ua, h.get("referer")),
+  ]);
 
   const t = scanMessages();
   const theme = scanTheme(cafe);

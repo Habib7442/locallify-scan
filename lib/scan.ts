@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { deviceKind } from "@/lib/bots";
 
@@ -37,8 +38,11 @@ function db() {
   return createAdminClient();
 }
 
-/** Resolves an active Dobara cafe + active table from the QR URL. */
-export async function resolveCafeTable(slug: string, code: string): Promise<{ cafe: ScanCafe; table: ScanTable } | null> {
+/** Resolves an active Dobara cafe + active table from the QR URL (deduped per request). */
+export const resolveCafeTable = cache(async function resolveCafeTable(
+  slug: string,
+  code: string,
+): Promise<{ cafe: ScanCafe; table: ScanTable } | null> {
   if (!/^[a-z0-9-]{3,40}$/.test(slug) || !/^[A-Za-z0-9]{1,6}$/.test(code)) return null;
   const supabase = db();
   const { data: cafe } = await supabase
@@ -59,7 +63,7 @@ export async function resolveCafeTable(slug: string, code: string): Promise<{ ca
     .maybeSingle();
   if (!table) return null;
   return { cafe: cafe as ScanCafe, table: table as ScanTable };
-}
+});
 
 export async function logScan(cafeId: string, tableId: string, ua: string | null, referrer: string | null) {
   const { error } = await db()
@@ -121,9 +125,8 @@ async function findLiveSession(tableId: string): Promise<{ id: string; opened_at
 
 export async function getDeviceState(cafeId: string, tableId: string, deviceId: string | null): Promise<DeviceState> {
   if (!deviceId) return { kind: "new" };
-  const known = await knownCustomerForDevice(cafeId, deviceId);
+  const [known, session] = await Promise.all([knownCustomerForDevice(cafeId, deviceId), findLiveSession(tableId)]);
 
-  const session = await findLiveSession(tableId);
   if (session) {
     const { data: member } = await db()
       .from("session_members")
@@ -143,19 +146,13 @@ export async function getDeviceState(cafeId: string, tableId: string, deviceId: 
 export async function isRateLimited(deviceId: string, ipHash: string | null): Promise<boolean> {
   const since = new Date(Date.now() - RATE_WINDOW_MS).toISOString();
   const supabase = db();
-  const { count: byDevice } = await supabase
-    .from("session_members")
-    .select("id", { count: "exact", head: true })
-    .eq("device_id", deviceId)
-    .gte("created_at", since);
-  if ((byDevice ?? 0) >= MAX_NEW_MEMBERS_PER_DEVICE) return true;
-  if (!ipHash) return false;
-  const { count: byIp } = await supabase
-    .from("session_members")
-    .select("id", { count: "exact", head: true })
-    .eq("ip_hash", ipHash)
-    .gte("created_at", since);
-  return (byIp ?? 0) >= MAX_NEW_MEMBERS_PER_IP;
+  const [{ count: byDevice }, ipResult] = await Promise.all([
+    supabase.from("session_members").select("id", { count: "exact", head: true }).eq("device_id", deviceId).gte("created_at", since),
+    ipHash
+      ? supabase.from("session_members").select("id", { count: "exact", head: true }).eq("ip_hash", ipHash).gte("created_at", since)
+      : Promise.resolve({ count: 0 }),
+  ]);
+  return (byDevice ?? 0) >= MAX_NEW_MEMBERS_PER_DEVICE || (ipResult.count ?? 0) >= MAX_NEW_MEMBERS_PER_IP;
 }
 
 // ------------------------------------------------------- session + codes
