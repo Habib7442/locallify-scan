@@ -79,7 +79,6 @@ export const dashboard = {
   addLabel: "Total tables",
   addSubmit: "Update tables",
   board: "Open Live Board",
-  boardSoon: "Coming soon",
   noTables: "No tables yet.",
 } as const;
 

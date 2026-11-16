@@ -1,25 +1,35 @@
 import { redirect } from "next/navigation";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { getCurrentBusiness, getOrgContext } from "@/lib/business";
 import { OwnerShell } from "@/components/owner/OwnerShell";
-import { board as copy } from "@/content/owner";
+import { board as copy } from "@/content/board";
+import { LiveBoard } from "./LiveBoard";
 
-export const metadata: Metadata = { title: "Live Board — Dobara", robots: { index: false } };
+export const metadata: Metadata = {
+  title: "Live Board — Dobara",
+  robots: { index: false },
+  manifest: "/manifest.webmanifest",
+};
+export const viewport: Viewport = { themeColor: "#18181a" };
 
-// Placeholder until the Live Board prompt (M1). Owners and staff both land here.
+// Live Board (Pehchaan, PRD §7.6): owners and staff of the active cafe.
 export default async function BoardPage() {
   const ctx = await getOrgContext();
   if (ctx.kind === "signed-out") redirect("/sign-in");
   if (ctx.kind === "no-org") redirect("/onboarding/create-cafe");
 
   const business = await getCurrentBusiness(ctx.orgId);
+  if (!business) {
+    return (
+      <OwnerShell>
+        <p className="text-[16px] text-[#9a9aa3]">{copy.notMember}</p>
+      </OwnerShell>
+    );
+  }
 
   return (
-    <OwnerShell cafeName={business?.display_name}>
-      <h1 className="text-[30px] leading-[1.15] tracking-[-0.05em] md:text-[38px]">{copy.title}</h1>
-      <p className="mt-3 max-w-[52ch] text-[16px] leading-[1.5] font-light text-[#9a9aa3]">
-        {business ? copy.line : copy.notMember}
-      </p>
+    <OwnerShell cafeName={business.display_name}>
+      <LiveBoard businessId={business.id} cafeName={business.display_name ?? ""} />
     </OwnerShell>
   );
 }

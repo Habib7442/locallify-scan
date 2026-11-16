@@ -31,13 +31,16 @@ export default async function DashboardPage() {
         <span className="break-all text-white">{base.replace(/^https?:\/\//, "")}</span>
       </div>
 
-      <div className={`${panelClass} mt-6 flex items-center justify-between gap-4`}>
+      <Link
+        href="/board"
+        className={`${panelClass} mt-6 flex items-center justify-between gap-4 transition-colors hover:border-[#54e0ff]/40`}
+      >
         <div className="flex items-center gap-3">
           <MonitorSmartphone className="size-5 text-[#54e0ff]" aria-hidden />
           <span className="text-[16px]">{copy.board}</span>
         </div>
-        <span className="rounded-full border border-white/10 px-3 py-1 text-[13px] text-[#9a9aa3]">{copy.boardSoon}</span>
-      </div>
+        <span aria-hidden className="text-[20px] text-[#9a9aa3]">→</span>
+      </Link>
 
       <section aria-labelledby="tables-title" className="mt-10">
         <h2 id="tables-title" className="text-[22px] tracking-[-0.04em]">
