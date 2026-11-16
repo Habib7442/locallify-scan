@@ -53,6 +53,8 @@ export type SessionMemberRow = {
   verify_code: string | null; // service role only
   verify_expires_at: string | null;
   verified_at: string | null;
+  wants_offers: boolean; // offers tick before verification (0011); copied to customers on verify
+  ip_hash: string | null; // hashed, rate limiting only (0011)
   created_at: string;
 };
 

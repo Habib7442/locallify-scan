@@ -793,3 +793,17 @@ grant execute on function public.set_customer_note(uuid, text) to authenticated;
 -- 8. Realtime for the Live Board (RLS applies per subscriber JWT)
 -- ---------------------------------------------------------------------
 alter publication supabase_realtime add table public.session_members, public.table_sessions;
+
+-- ---------------------------------------------------------------
+-- Scan page support (migration 0011)
+-- ---------------------------------------------------------------
+alter table public.session_members
+  add column if not exists wants_offers boolean not null default false,
+  add column if not exists ip_hash text;
+
+create index if not exists session_members_ip_hash_created_idx
+  on public.session_members (ip_hash, created_at)
+  where ip_hash is not null;
+
+create index if not exists session_members_device_created_idx
+  on public.session_members (device_id, created_at);

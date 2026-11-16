@@ -1,9 +1,6 @@
-import { ClerkProvider } from "@clerk/nextjs";
-import { shadcn } from "@clerk/ui/themes";
 import type { Metadata } from "next";
 import { Hanken_Grotesk } from "next/font/google";
 import { SITE_URL } from "@/lib/site";
-import { clerkLocalization } from "@/content/owner";
 import { GOOGLE_SITE_VERIFICATION, buildMetadata } from "@/lib/seo";
 import "./globals.css";
 
@@ -48,27 +45,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <ClerkProvider
-          appearance={{
-            theme: shadcn,
-            variables: {
-              colorPrimary: "#54e0ff",
-              colorPrimaryForeground: "#18181a",
-              colorBackground: "#1e1e20",
-              colorForeground: "#ffffff",
-              colorMutedForeground: "#9a9aa3",
-              colorInput: "#18181a",
-              colorInputForeground: "#ffffff",
-              colorBorder: "#33373b",
-              borderRadius: "12px",
-              fontFamily: "var(--font-body)",
-            },
-          }}
-          localization={clerkLocalization}
-          taskUrls={{ "choose-organization": "/onboarding/create-cafe" }}
-        >
-          {children}
-        </ClerkProvider>
+        {children}
       </body>
     </html>
   );

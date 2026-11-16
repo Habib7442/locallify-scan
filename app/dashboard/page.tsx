@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { MonitorSmartphone } from "lucide-react";
+import Link from "next/link";
+import { MonitorSmartphone, Printer } from "lucide-react";
+import { btn } from "@/components/landing/primitives";
 import { getCurrentBusiness, getOrgContext, listTables } from "@/lib/business";
 import { OwnerShell, panelClass } from "@/components/owner/OwnerShell";
 import { dashboard as copy } from "@/content/owner";
@@ -42,6 +44,11 @@ export default async function DashboardPage() {
           {copy.tablesTitle} <span className="text-[#9a9aa3]">({tables.length})</span>
         </h2>
         <p className="mt-1 text-[15px] font-light text-[#9a9aa3]">{copy.tablesLine}</p>
+        {tables.length > 0 ? (
+          <Link href="/dashboard/print" className={`${btn.primary} ${btn.sizeMd} mt-4 shadow-none`}>
+            <Printer className="size-5" aria-hidden /> {copy.print}
+          </Link>
+        ) : null}
 
         {tables.length === 0 ? (
           <p className="mt-6 text-[15px] text-[#9a9aa3]">{copy.noTables}</p>

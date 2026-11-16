@@ -199,9 +199,9 @@ Indexes required: `customers(business_id, phone_e164)`, `table_sessions(business
 
 Existing tables still in the schema (`supabase/schema.sql`): `agencies`, `profiles`, `pages` (branding lives here), `links`, `scans`, `orders` (parked), `vertical_templates` (parked), `whatsapp_webhook_events` (M0 raw webhook inbox, deduped on `wa_message_id`; service role only).
 
-**`business_id` = `public.pages.id`** (decided 2026-11-16). `pages.clerk_org_id` links a cafe to its Clerk Organization; `org:admin` = Owner, `org:member` = Staff. RLS reads the **active org** from the Clerk JWT (v2 `o.id`/`o.rol`, v1 `org_id`/`org_role`) via `private.current_business_id()` / `private.jwt_org_role()`. PRD's `tables.qr_slug` is dropped — QR URLs use `pages.slug` + `tables.code`. M1 tables (migration `0010`): `tables`, `customers`, `table_sessions`, `session_members`, `message_log`, plus `scans.table_id`. Staff read customers only through `public.live_board_feed()` (masked phone) and write notes through `public.set_customer_note()`. Row types: `lib/supabase/dobara-types.ts`.
+**`business_id` = `public.pages.id`** (decided 2026-11-16). `pages.clerk_org_id` links a cafe to its Clerk Organization; `org:admin` = Owner, `org:member` = Staff. RLS reads the **active org** from the Clerk JWT (v2 `o.id`/`o.rol`, v1 `org_id`/`org_role`) via `private.current_business_id()` / `private.jwt_org_role()`. PRD's `tables.qr_slug` is dropped — QR URLs use `pages.slug` + `tables.code`. M1 tables (migration `0010`): `tables`, `customers`, `table_sessions`, `session_members`, `message_log`, plus `scans.table_id`. Staff read customers only through `public.live_board_feed()` (masked phone) and write notes through `public.set_customer_note()`. Row types: `lib/supabase/dobara-types.ts`. Migration `0011` adds `session_members.wants_offers` (offers tick, copied to `customers.opted_in` only after WhatsApp verification) and `session_members.ip_hash` (hashed IP for rate limiting).
 
-Migrations go in `supabase/migrations/NNNN_name.sql` (next is `0011`), and `supabase/schema.sql` is kept in sync. Whenever a field is added or changed, keep the schema, the types, this section and `PRD.md` §10 in sync.
+Migrations go in `supabase/migrations/NNNN_name.sql` (next is `0012`), and `supabase/schema.sql` is kept in sync. Whenever a field is added or changed, keep the schema, the types, this section and `PRD.md` §10 in sync.
 
 ---
 
@@ -320,8 +320,8 @@ Only `NEXT_PUBLIC_*` values may reach browser code. Everything else is server-on
 | `WHATSAPP_APP_SECRET` | Verifies `X-Hub-Signature-256` | server only — configured |
 | `WHATSAPP_VERIFY_TOKEN` | Meta webhook GET verification | server only — configured |
 | `WHATSAPP_GRAPH_VERSION` | Graph API version for Cloud API calls (default `v27.0`) | server only — optional |
-| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Shared Dobara number for `wa.me` click-to-chat links | client + server — proposed, not yet set |
-| `DEVICE_COOKIE_SECRET` | Signs the customer device cookie | server only — proposed, not yet set |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Shared Dobara number (digits only) for `wa.me` click-to-chat links | client + server — configured (Meta test number until the real number is live) |
+| `DEVICE_COOKIE_SECRET` | Signs the customer device cookie (`dobara_device`) and salts IP hashes | server only — configured (≥ 32 random chars) |
 | `CRON_SECRET` | Authenticates scheduled-job routes | server only — proposed, not yet set |
 
 Names marked "proposed" are confirmed or renamed in the prompt that first uses them. Keep this table in sync.
