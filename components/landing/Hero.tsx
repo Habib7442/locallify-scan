@@ -4,6 +4,7 @@ import { hero } from "@/content/landing";
 import { DEMO_WHATSAPP_URL } from "@/lib/site";
 import { AccentTitle, Container, Eyebrow, Glow, btn } from "./primitives";
 import { HeroPreview } from "./HeroPreview";
+import { ScrollLink } from "./ScrollLink";
 
 const delay = (ms: number) => ({ animationDelay: `${ms}ms` });
 
@@ -44,9 +45,9 @@ export function Hero() {
               <FaWhatsapp className="size-5" aria-hidden />
               {hero.primaryCta}
             </a>
-            <a href="#how-it-works" className={`${btn.secondary} ${btn.sizeLg}`}>
+            <ScrollLink to="how-it-works" className={`${btn.secondary} ${btn.sizeLg}`}>
               {hero.secondaryCta}
-            </a>
+            </ScrollLink>
           </div>
 
           <ul className="fade-up mt-8 flex flex-wrap gap-x-5 gap-y-2" style={delay(300)}>

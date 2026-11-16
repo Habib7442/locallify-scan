@@ -6,13 +6,14 @@ import { nav } from "@/content/landing";
 import { DEMO_WHATSAPP_URL } from "@/lib/site";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { btn, focusRing } from "./primitives";
+import { ScrollLink } from "./ScrollLink";
 
 function Logo() {
   return (
-    <a href="#top" className={`flex items-baseline gap-1.5 rounded-md ${focusRing}`}>
+    <ScrollLink to="top" className={`flex items-baseline gap-1.5 rounded-md ${focusRing}`}>
       <span className="text-[17px] font-medium tracking-[-0.04em] text-white">{nav.brand}</span>
       <span className="text-[13px] font-light text-[#8b8b94]">{nav.byline}</span>
-    </a>
+    </ScrollLink>
   );
 }
 
@@ -27,13 +28,13 @@ export function Header() {
         <nav aria-label="Main" className="hidden md:block">
           <ul className="flex items-center gap-7">
             {nav.links.map((link) => (
-              <li key={link.href}>
-                <a
-                  href={link.href}
+              <li key={link.to}>
+                <ScrollLink
+                  to={link.to}
                   className={`rounded-md text-[15px] font-light tracking-[-0.03em] text-[#9a9aa3] transition-colors hover:text-white ${focusRing}`}
                 >
                   {link.label}
-                </a>
+                </ScrollLink>
               </li>
             ))}
           </ul>
@@ -61,14 +62,15 @@ export function Header() {
               <nav aria-label="Mobile">
                 <ul className="flex flex-col gap-1">
                   {nav.links.map((link) => (
-                    <li key={link.href}>
-                      <a
-                        href={link.href}
+                    <li key={link.to}>
+                      <ScrollLink
+                        to={link.to}
+                        delayMs={300}
                         onClick={() => setOpen(false)}
                         className={`block rounded-[12px] px-3 py-3 text-lg font-light tracking-[-0.03em] text-white hover:bg-white/5 ${focusRing}`}
                       >
                         {link.label}
-                      </a>
+                      </ScrollLink>
                     </li>
                   ))}
                 </ul>
