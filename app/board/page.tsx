@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { getCurrentBusiness, getOrgContext } from "@/lib/business";
 import { OwnerShell } from "@/components/owner/OwnerShell";
 import { board as copy } from "@/content/board";
-import { LiveBoard } from "./LiveBoard";
+import { BoardClient } from "./BoardClient";
 
 export const metadata: Metadata = {
   title: "Live Board — Dobara",
@@ -29,7 +29,7 @@ export default async function BoardPage() {
 
   return (
     <OwnerShell cafeName={business.display_name}>
-      <LiveBoard businessId={business.id} cafeName={business.display_name ?? ""} />
+      <BoardClient businessId={business.id} cafeName={business.display_name ?? ""} />
     </OwnerShell>
   );
 }

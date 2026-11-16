@@ -37,3 +37,8 @@ export function playChime(): void {
     // Vibration not supported (desktop) — ignore.
   }
 }
+
+/** True once audio is allowed (after a tap in this page load). */
+export function isChimeReady(): boolean {
+  return ctx?.state === "running";
+}

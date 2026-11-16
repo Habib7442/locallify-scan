@@ -6,13 +6,22 @@ import { board as copy } from "@/content/board";
 import { btn, focusRing } from "@/components/landing/primitives";
 import type { LiveBoardFeedRow } from "@/lib/supabase/dobara-types";
 import { useLiveFeed, type ConnectionStatus } from "./useLiveFeed";
-import { armChime, playChime } from "./chime";
+import { armChime, isChimeReady, playChime } from "./chime";
 import { NoteSheet } from "./NoteSheet";
 
 const FLASH_MS = 10_000;
 const SOUND_KEY = "dobara.board.sound";
+const STARTED_KEY = "dobara.board.started";
 
 type WakeLockSentinelLike = { release: () => Promise<void> };
+
+function readStarted(): boolean {
+  try {
+    return localStorage.getItem(STARTED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 function readSoundPref(): boolean {
   if (typeof window === "undefined") return true;
@@ -43,7 +52,9 @@ function StatusPill({ status }: { status: ConnectionStatus }) {
 }
 
 export function LiveBoard({ businessId, cafeName }: { businessId: string; cafeName: string }) {
-  const [started, setStarted] = useState(false);
+  // Client-only component (see BoardClient), so localStorage is safe here.
+  const [started, setStarted] = useState(readStarted);
+  const [audioReady, setAudioReady] = useState(false);
   const [sound, setSound] = useState(readSoundPref);
   const [flash, setFlash] = useState<Set<string>>(() => new Set());
   const [now, setNow] = useState(() => Date.now());
@@ -108,13 +119,37 @@ export function LiveBoard({ businessId, cafeName }: { businessId: string; cafeNa
 
   function start() {
     armChime();
+    setAudioReady(isChimeReady());
     setStarted(true);
+    try {
+      localStorage.setItem(STARTED_KEY, "1");
+    } catch {
+      // ignore
+    }
   }
+
+  // After a refresh the browser blocks sound until the next tap: arm on the first tap anywhere.
+  useEffect(() => {
+    if (!started || audioReady) return;
+    const arm = () => {
+      armChime();
+      window.setTimeout(() => setAudioReady(isChimeReady()), 50);
+    };
+    window.addEventListener("pointerdown", arm);
+    window.addEventListener("keydown", arm);
+    return () => {
+      window.removeEventListener("pointerdown", arm);
+      window.removeEventListener("keydown", arm);
+    };
+  }, [started, audioReady]);
 
   function toggleSound() {
     const next = !sound;
     setSound(next);
-    if (next) armChime();
+    if (next) {
+      armChime();
+      window.setTimeout(() => setAudioReady(isChimeReady()), 50);
+    }
     try {
       localStorage.setItem(SOUND_KEY, next ? "on" : "off");
     } catch {
@@ -175,6 +210,18 @@ export function LiveBoard({ businessId, cafeName }: { businessId: string; cafeNa
           </button>
         </div>
       </div>
+      {sound && !audioReady ? (
+        <button
+          type="button"
+          onClick={() => {
+            armChime();
+            window.setTimeout(() => setAudioReady(isChimeReady()), 50);
+          }}
+          className={`mt-4 w-full rounded-2xl border border-amber-300/40 bg-amber-300/10 px-4 py-3 text-left text-[16px] text-amber-200 ${focusRing}`}
+        >
+          {copy.tapForSound}
+        </button>
+      ) : null}
       <p className="sr-only" aria-live="polite">
         {arrived[0] && flash.has(arrived[0].member_id)
           ? `${copy.table(arrived[0].table_code)}, ${arrived[0].customer_name ?? copy.guest}`
@@ -214,7 +261,13 @@ export function LiveBoard({ businessId, cafeName }: { businessId: string; cafeNa
                       {r.phone_last4 ? ` · …${r.phone_last4}` : ""}
                     </p>
                     <p className={`mt-2 text-[15px] ${r.notes ? "text-white" : "text-[#8b8b94]"}`}>
-                      {r.notes ? `📝 ${r.notes}` : `+ ${copy.addNote}`}
+                      {r.notes ? (
+                        <>
+                          <span className="text-[13px] text-[#8b8b94]">{copy.noteAbout(name)}: </span>📝 {r.notes}
+                        </>
+                      ) : (
+                        `+ ${copy.addNote}`
+                      )}
                     </p>
                   </button>
                 </li>

@@ -28,6 +28,8 @@ export const board = {
   noteRetry: "Couldn't save — retrying…",
   noteFailed: "Couldn't save. Check the internet and try again.",
   addNote: "Add note",
+  noteAbout: (name: string) => `Note about ${name.split(" ")[0]}`,
+  tapForSound: "🔊 Tap anywhere to turn on sound",
   editNote: "Edit note",
   notMember: "You're not part of a cafe yet. Ask your cafe owner to invite you.",
 } as const;
