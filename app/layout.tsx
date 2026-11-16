@@ -11,6 +11,8 @@ import "./globals.css";
 // renders on a system-sans fallback in practice. Hanken Grotesk is a real,
 // self-hosted grotesque sans with the same tight, confident character.
 const bodySans = Hanken_Grotesk({
+  weight: ["300", "400", "500", "600"],
+  style: ["normal", "italic"],
   variable: "--font-body",
   subsets: ["latin"],
 });

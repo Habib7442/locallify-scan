@@ -1,67 +1,68 @@
+import { Check } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
+import { hero } from "@/content/landing";
 import { DEMO_WHATSAPP_URL } from "@/lib/site";
-import { HeroBackground } from "@/components/landing/hero/HeroBackground";
-import { HeroCopy } from "@/components/landing/hero/HeroCopy";
-import { HeroScene } from "@/components/landing/hero/HeroScene";
-import type { HeroContent } from "@/components/landing/hero/types";
+import { AccentTitle, Container, Eyebrow, Glow, btn } from "./primitives";
+import { HeroPreview } from "./HeroPreview";
 
-// ------------------------------------------------------------------
-// All hero text lives here — edit freely. (The demo WhatsApp number is
-// CONTACT_WHATSAPP in lib/site.ts.)
-// ------------------------------------------------------------------
-export const HERO_CONTENT: HeroContent = {
-  eyebrow: "For cafes & restaurants · Silchar",
-  headline: {
-    line1: "Customer aaya?",
-    line2Before: "Ab ",
-    accent: "dobara",
-    line2After: " aayega.",
-  },
-  sub: "Dobara turns first-time diners into regulars — with a QR on every table, WhatsApp, and rewards that only work on the next visit. Your billing system stays exactly as it is.",
-  primaryCta: { label: "Book a free demo on WhatsApp", href: DEMO_WHATSAPP_URL },
-  secondaryCta: { label: "See how it works", href: "#how-it-works" },
-  trust: ["No app for customers", "Works with your billing", "We set it up in person"],
-  proof: "Free pilot for our first 3 cafes",
-  scene: {
-    ariaLabel:
-      "Animation: a cafe table where customers scan, unlock a free dessert, staff recognise a regular, and a customer wins a next-visit prize.",
-    steps: ["Scan", "Squad", "Pehchaan", "Inaam"],
-    cafeName: "Brew House",
-    tableName: "Table 4",
-    tableCode: "T4",
-    seats: ["P", "R", "A", "S"],
-    dessertCard: "🍰 Free dessert unlocked!",
-    phone: {
-      welcome: "Welcome! 👋",
-      unlock: "Unlock your reward on WhatsApp",
-      verified: "Verified ✓",
-      squadTitle: "Table Squad",
-      squadDone: "Squad complete 🎉",
-      prizeIntro: "Thanks for visiting!",
-      prizeTitle: "☕ Free Cold Coffee",
-      prizeDetail: "Next visit · valid 14 days",
-      prizeSaved: "Saved on your WhatsApp ✓",
-      scratchHint: "Scratch",
-      footer: "Dobara · by Locallify",
-    },
-    tablet: {
-      label: "Counter screen",
-      live: "Live",
-      openTables: "Open tables: T2 · T4 · T7",
-      idle: "Waiting for scans…",
-      alertTitle: "🔔 Table 4 — Arjun",
-      alertLine: "6th visit · kam teekha · Birthday 22 Nov 🎂",
-    },
-  },
-};
+const delay = (ms: number) => ({ animationDelay: `${ms}ms` });
 
 export function Hero() {
   return (
-    <section className="relative isolate w-full overflow-hidden">
-      <HeroBackground />
-      <div className="relative mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-12 px-4 pb-20 pt-28 sm:px-8 sm:pt-40 lg:grid-cols-[45fr_55fr] lg:gap-12 lg:pb-24 lg:pt-[150px]">
-        <HeroCopy content={HERO_CONTENT} />
-        <HeroScene content={HERO_CONTENT.scene} />
-      </div>
+    <section id="top" aria-labelledby="hero-title" className="relative overflow-hidden bg-[#18181a] pt-28 pb-14 md:pt-36 md:pb-16">
+      <div aria-hidden className="bg-pixel-grid pointer-events-none absolute inset-0 opacity-10" />
+      <Glow />
+
+      <Container className="relative grid items-center gap-14 lg:grid-cols-[1.1fr_1fr] lg:gap-12">
+        <div className="flex flex-col items-start">
+          <Eyebrow className="fade-up">{hero.eyebrow}</Eyebrow>
+
+          <h1
+            id="hero-title"
+            className="fade-up mt-6 text-[38px] leading-[1.15] font-normal tracking-[-0.05em] text-balance text-white sm:text-[52px] lg:text-[66px] lg:tracking-[-0.06em]"
+            style={delay(80)}
+          >
+            {hero.titleLine1}{" "}
+            <br className="hidden md:inline" />
+            <AccentTitle title={hero.title} />
+          </h1>
+
+          <p
+            className="fade-up mt-6 max-w-[56ch] text-base leading-[1.5] font-light text-[#9a9aa3] md:text-[20px]"
+            style={delay(160)}
+          >
+            {hero.subtitle}
+          </p>
+
+          <div className="fade-up mt-9 flex w-full flex-col gap-3 sm:w-auto sm:flex-row" style={delay(240)}>
+            <a
+              href={DEMO_WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${btn.primary} ${btn.sizeLg} rounded-[15px]`}
+            >
+              <FaWhatsapp className="size-5" aria-hidden />
+              {hero.primaryCta}
+            </a>
+            <a href="#how-it-works" className={`${btn.secondary} ${btn.sizeLg}`}>
+              {hero.secondaryCta}
+            </a>
+          </div>
+
+          <ul className="fade-up mt-8 flex flex-wrap gap-x-5 gap-y-2" style={delay(300)}>
+            {hero.checks.map((item) => (
+              <li key={item} className="flex items-center gap-2 text-[15px] font-light text-[#9a9aa3]">
+                <Check className="size-4 text-green-400" aria-hidden />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="fade-up flex justify-center lg:justify-end" style={delay(200)}>
+          <HeroPreview />
+        </div>
+      </Container>
     </section>
   );
 }
