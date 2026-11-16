@@ -1,9 +1,13 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Calendar, X, MessageSquare } from "lucide-react";
 import { typeMeta } from "@/lib/link-types";
 import { getPublicAssetUrl } from "@/lib/storage";
 import { fontClassName } from "@/lib/fonts";
 import { themeRecipe } from "@/lib/themes";
+import { VerticalFeatures } from "@/components/hub/VerticalFeatures";
 
 export type HubContentLink = {
   id: string;
@@ -31,6 +35,7 @@ export type HubContentPage = {
   tagline_color?: string | null;
   link_bg_color?: string | null;
   link_text_color?: string | null;
+  vertical?: string | null;
 };
 
 export function initials(name: string) {
@@ -68,10 +73,12 @@ export function HubContent({ page, links }: { page: HubContentPage; links: HubCo
   const bgOverlay = page.bg_image_overlay ?? 30;
   const hasLinkColorOverride = Boolean(page.link_bg_color || page.link_text_color);
 
-  // A theme's own text/card colours are tuned for that theme's background —
-  // not guaranteed to read against an arbitrary uploaded photo. When the
-  // background is an image, fall back to fixed high-contrast defaults
-  // instead of the theme recipe, unless the user set an explicit override.
+  // State for appointment booking modal
+  const [bookingLink, setBookingLink] = useState<HubContentLink | null>(null);
+  const [clientName, setClientName] = useState("");
+  const [preferredTime, setPreferredTime] = useState("");
+  const [notes, setNotes] = useState("");
+
   const defaultHeadingColor = isImageBg ? "#ffffff" : recipe.headingColor;
   const defaultTaglineColor = isImageBg ? "rgba(255,255,255,0.85)" : recipe.taglineColor;
   const defaultIconColor = isImageBg ? "#ffffff" : recipe.iconColor;
@@ -84,9 +91,24 @@ export function HubContent({ page, links }: { page: HubContentPage; links: HubCo
 
   const linkIconColor = page.link_text_color || defaultIconColor;
 
+  const handleBookingSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bookingLink) return;
+
+    const phoneRaw = bookingLink.destination.replace(/[^0-9]/g, "");
+    const message = `Hi! I would like to book an appointment with ${name}.\n\n👤 Name: ${clientName || "Not specified"}\n📅 Preferred Time: ${preferredTime || "Flexible"}${notes ? `\n📝 Notes: ${notes}` : ""}`;
+
+    const waUrl = `https://wa.me/${phoneRaw}?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, "_blank");
+    setBookingLink(null);
+    setClientName("");
+    setPreferredTime("");
+    setNotes("");
+  };
+
   return (
     <div
-      className="relative min-h-full w-full flex flex-col items-center px-4 py-16 font-sans overflow-hidden"
+      className="relative min-h-screen w-full flex-1 flex flex-col items-center justify-between px-4 py-12 sm:py-16 font-sans overflow-x-hidden"
       style={bgImageUrl ? undefined : { background: customBackground ?? recipe.background }}
     >
       {bgImageUrl && (
@@ -97,6 +119,7 @@ export function HubContent({ page, links }: { page: HubContentPage; links: HubCo
               backgroundImage: `url(${bgImageUrl})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
               filter: `brightness(${bgBrightness}%) contrast(${bgContrast}%)`,
             }}
           />
@@ -106,7 +129,7 @@ export function HubContent({ page, links }: { page: HubContentPage; links: HubCo
           />
         </>
       )}
-      <div className="relative w-full max-w-sm flex flex-col items-center text-center">
+      <div className="relative w-full max-w-sm flex flex-col items-center text-center my-auto">
         {logoUrl ? (
           <div
             className={`relative w-20 h-20 rounded-full overflow-hidden mb-4 ring-offset-2 ring-offset-transparent ${
@@ -153,7 +176,13 @@ export function HubContent({ page, links }: { page: HubContentPage; links: HubCo
             {page.tagline}
           </p>
         )}
-        {!page.tagline && <div className="mb-8" />}
+        {!page.tagline && <div className="mb-6" />}
+
+        {/* Business Plan Vertical Signature Feature */}
+        <VerticalFeatures
+          vertical={page.vertical ?? null}
+          accentColor={focusColor || "#54e0ff"}
+        />
 
         <div className="w-full flex flex-col gap-3">
           {links.length === 0 && (
@@ -162,9 +191,13 @@ export function HubContent({ page, links }: { page: HubContentPage; links: HubCo
             </p>
           )}
           {links.map((link) => {
-            const href = linkHref(link.type, link.destination);
+            const isBookingWhatsApp =
+              link.type === "book" &&
+              (!link.destination.startsWith("http") || link.destination.includes("wa.me"));
+            const href = isBookingWhatsApp ? null : linkHref(link.type, link.destination);
             const meta = typeMeta(link.type);
             const TypeIcon = meta.icon;
+
             const content = (
               <>
                 <span className="flex items-center gap-3 min-w-0">
@@ -179,11 +212,11 @@ export function HubContent({ page, links }: { page: HubContentPage; links: HubCo
                     {link.sub && <span className="text-xs opacity-70 truncate w-full">{link.sub}</span>}
                   </span>
                 </span>
-                {href && <ExternalLink className="size-4 opacity-70 shrink-0" />}
+                {(href || isBookingWhatsApp) && <ExternalLink className="size-4 opacity-70 shrink-0" />}
               </>
             );
 
-            const className = `w-full flex items-center justify-between gap-3 ${recipe.radiusClassName} px-5 py-4 border transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent motion-reduce:transition-none ${
+            const className = `w-full flex items-center justify-between gap-3 ${recipe.radiusClassName} px-5 py-4 border transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent motion-reduce:transition-none cursor-pointer ${
               hasLinkColorOverride ? "hover:brightness-90" : defaultLinkCardClassName
             }`;
 
@@ -195,6 +228,20 @@ export function HubContent({ page, links }: { page: HubContentPage; links: HubCo
                 : {}),
               ...(page.link_text_color ? { color: page.link_text_color } : {}),
             };
+
+            if (isBookingWhatsApp) {
+              return (
+                <button
+                  key={link.id}
+                  type="button"
+                  onClick={() => setBookingLink(link)}
+                  className={className}
+                  style={linkStyle}
+                >
+                  {content}
+                </button>
+              );
+            }
 
             return href ? (
               <a
@@ -219,6 +266,76 @@ export function HubContent({ page, links }: { page: HubContentPage; links: HubCo
           Powered by Locallify Scan
         </p>
       </div>
+
+      {/* Appointment Request Modal */}
+      {bookingLink && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="relative w-full max-w-sm rounded-[24px] bg-[#1e1e20] border border-white/15 p-6 shadow-2xl text-left">
+            <button
+              type="button"
+              onClick={() => setBookingLink(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+            >
+              <X className="size-4" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="size-10 rounded-full bg-[#54e0ff]/10 border border-[#54e0ff]/20 flex items-center justify-center text-[#54e0ff]">
+                <Calendar className="size-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white leading-tight">Request Appointment</h3>
+                <p className="text-xs text-[#7a7a83]">Send request directly to {name}</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleBookingSubmit} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-medium text-gray-300 mb-1">Your Name</label>
+                <input
+                  type="text"
+                  required
+                  value={clientName}
+                  onChange={(e) => setClientName(e.target.value)}
+                  placeholder="e.g. Rahul Sharma"
+                  className="w-full rounded-[10px] bg-[#18181a] border border-[#33373b] px-3 py-2 text-sm text-white focus:border-[#54e0ff] outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-300 mb-1">Preferred Date & Time</label>
+                <input
+                  type="text"
+                  required
+                  value={preferredTime}
+                  onChange={(e) => setPreferredTime(e.target.value)}
+                  placeholder="e.g. Tomorrow at 4:00 PM"
+                  className="w-full rounded-[10px] bg-[#18181a] border border-[#33373b] px-3 py-2 text-sm text-white focus:border-[#54e0ff] outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-300 mb-1">Service / Notes (Optional)</label>
+                <textarea
+                  rows={2}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="e.g. Consultation / Teeth Cleaning"
+                  className="w-full rounded-[10px] bg-[#18181a] border border-[#33373b] px-3 py-2 text-sm text-white focus:border-[#54e0ff] outline-none resize-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full mt-2 py-3 rounded-[12px] bg-[#25d366] hover:bg-[#20bd5a] text-white font-medium text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-lg"
+              >
+                <MessageSquare className="size-4 fill-white" />
+                <span>Confirm & Send on WhatsApp</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

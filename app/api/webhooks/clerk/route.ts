@@ -1,35 +1,7 @@
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-function slugify(input: string) {
-  return input
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-async function generateUniqueSlug(
-  supabase: ReturnType<typeof createAdminClient>,
-  seed: string,
-) {
-  const base = slugify(seed) || "hub";
-  let slug = base;
-  let suffix = 0;
-
-  while (true) {
-    const { data } = await supabase
-      .from("pages")
-      .select("id")
-      .eq("slug", slug)
-      .maybeSingle();
-
-    if (!data) return slug;
-
-    suffix += 1;
-    slug = `${base}-${suffix}`;
-  }
-}
+import { provisionUser } from "@/lib/provisioning";
 
 export async function POST(req: NextRequest) {
   let evt;
@@ -47,54 +19,9 @@ export async function POST(req: NextRequest) {
     const email = email_addresses[0]?.email_address ?? null;
     const name = `${first_name ?? ""} ${last_name ?? ""}`.trim() || null;
 
-    const { data: agency, error: agencyError } = await supabase
-      .from("agencies")
-      .select("id")
-      .eq("name", "Locallify")
-      .single();
-
-    if (agencyError || !agency) {
-      console.error("Clerk webhook: seeded Locallify agency not found", agencyError);
-      return new NextResponse("Agency not configured", { status: 500 });
-    }
-
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .upsert(
-        { clerk_user_id: id, agency_id: agency.id, role: "user", name, email },
-        { onConflict: "clerk_user_id" },
-      );
-
-    if (profileError) {
-      console.error("Clerk webhook: failed to upsert profile", profileError);
-      return new NextResponse("Failed to create profile", { status: 500 });
-    }
-
-    const { data: existingPage } = await supabase
-      .from("pages")
-      .select("id")
-      .eq("owner_clerk_id", id)
-      .maybeSingle();
-
-    if (!existingPage) {
-      const slug = await generateUniqueSlug(supabase, name || email || id);
-      const { error: pageError } = await supabase.from("pages").insert({
-        agency_id: agency.id,
-        owner_clerk_id: id,
-        slug,
-        display_name: name || "My Hub",
-        theme: "midnight",
-        bg_type: "solid",
-        bg_value: null,
-        active: true,
-        subscription_status: "trialing",
-        trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      });
-
-      if (pageError) {
-        console.error("Clerk webhook: failed to create page", pageError);
-        return new NextResponse("Failed to create page", { status: 500 });
-      }
+    const result = await provisionUser({ id, email, name });
+    if (!result.ok) {
+      return new NextResponse(result.error, { status: 500 });
     }
   }
 

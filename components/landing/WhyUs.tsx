@@ -1,58 +1,59 @@
-import { ShieldCheck, Check } from "lucide-react";
+import { HandHeart, MessageCircleOff, QrCode, ReceiptText, ShieldCheck, Smartphone } from "lucide-react";
+
+const REASONS = [
+  {
+    icon: ReceiptText,
+    title: "Keeps your billing as it is",
+    desc: "Use Petpooja, DotPe or a cash register — Dobara works alongside it. Nothing to replace, nothing to integrate.",
+  },
+  {
+    icon: Smartphone,
+    title: "No app for your customers",
+    desc: "Diners only need their camera and WhatsApp. No download, no sign-up, no password.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "The customer list is yours",
+    desc: "Delivery apps keep the number. With Dobara, every verified diner belongs to your cafe — never shared with other cafes, never sold.",
+  },
+  {
+    icon: HandHeart,
+    title: "Set up in person",
+    desc: "We print your table cards, set up the counter screen on a phone or tablet, and train your staff in about 20 minutes.",
+  },
+  {
+    icon: QrCode,
+    title: "Table codes that never expire",
+    desc: "Your QR codes live on Locallify's own domain. Rename or switch off a table any time without reprinting.",
+  },
+  {
+    icon: MessageCircleOff,
+    title: "WhatsApp, without the spam",
+    desc: "Diners opt in themselves, can reply STOP anytime, and get at most 4 offers a month — protecting your name.",
+  },
+];
 
 export function WhyUs() {
   return (
-    <section id="why-us" className="py-20 px-4 bg-[#1a1a1c] border-y border-white/10">
-      <div className="mx-auto max-w-4xl text-center">
-        <h2 className="text-2xl sm:text-4xl font-bold text-white mb-6 text-balance">
-          This happens more than you&apos;d think
-        </h2>
+    <section id="why-dobara" className="bg-[#18181a] px-4 py-20 sm:py-28">
+      <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-3xl sm:text-5xl font-normal tracking-[-0.03em] text-white text-balance">
+            Built for how Indian restaurants{" "}
+            <span className="font-semibold italic text-[#54e0ff]">actually run</span>
+          </h2>
+        </div>
 
-        <p className="text-base sm:text-xl text-[#7a7a83] leading-relaxed max-w-3xl mx-auto mb-10 text-balance">
-          A business prints a QR code from a third-party tool. When the free
-          trial behind it quietly ends, the vendor demands{" "}
-          <span className="font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded">
-            up to ₹2,000
-          </span>{" "}
-          just to keep an already-printed code working.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto text-left">
-          <div className="p-6 rounded-2xl bg-red-500/[0.04] border border-red-500/20">
-            <div className="flex items-center gap-2 text-red-400 font-bold text-sm mb-2">
-              <span className="size-2 rounded-full bg-red-500" />
-              Third-Party Vendors
+        <div className="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {REASONS.map(({ icon: Icon, title, desc }) => (
+            <div key={title} className="rounded-[20px] border border-white/10 bg-white/[0.02] p-6">
+              <span className="inline-flex size-11 items-center justify-center rounded-xl bg-[#54e0ff]/10 text-[#54e0ff]">
+                <Icon className="size-5" />
+              </span>
+              <h3 className="mt-4 text-[17px] font-semibold text-white">{title}</h3>
+              <p className="mt-1.5 text-[14px] leading-relaxed text-[#8a8a93]">{desc}</p>
             </div>
-            <ul className="space-y-2 text-xs text-[#c7c7cc]">
-              <li className="flex items-start gap-2">
-                <span className="text-red-500">✕</span> Code points to vendor subdomains
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-red-500">✕</span> Code deactivates if billing lapses
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-red-500">✕</span> Forced reprinting costs & customer loss
-              </li>
-            </ul>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-[#54e0ff]/[0.04] border border-[#54e0ff]/20">
-            <div className="flex items-center gap-2 text-[#54e0ff] font-bold text-sm mb-2">
-              <ShieldCheck className="size-4" />
-              Locallify Scan
-            </div>
-            <ul className="space-y-2 text-xs text-[#c7c7cc]">
-              <li className="flex items-start gap-2">
-                <Check className="size-4 text-[#54e0ff] shrink-0" /> Redirect lives on Locallify&apos;s own domain
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="size-4 text-[#54e0ff] shrink-0" /> Destination stays editable anytime
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="size-4 text-[#54e0ff] shrink-0" /> Printed code works forever with zero lock-in
-              </li>
-            </ul>
-          </div>
+          ))}
         </div>
       </div>
     </section>

@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { provisionSignedInUser } from "@/lib/provisioning";
 import { buildMetadata } from "@/lib/seo";
 import { OnboardingForm } from "./onboarding-form";
 
@@ -11,15 +13,29 @@ export const metadata = buildMetadata({
 });
 
 export default async function OnboardingPage() {
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+
   const supabase = createServerSupabaseClient();
 
-  const [{ data: page, error: pageError }, { data: verticals }] = await Promise.all([
+  // Scoped to the caller's own page (see app/dashboard/page.tsx).
+  const loadOwnPage = () =>
     supabase
       .from("pages")
       .select("slug, display_name, tagline, vertical, onboarded_at")
-      .single(),
+      .eq("owner_clerk_id", userId)
+      .maybeSingle();
+
+  const [ownPage, { data: verticals }] = await Promise.all([
+    loadOwnPage(),
     supabase.from("vertical_templates").select("vertical, signature_feature"),
   ]);
+  let { data: page, error: pageError } = ownPage;
+
+  // Missed signup webhook → create the user's rows now, then reload.
+  if (!page && !pageError && (await provisionSignedInUser()).ok) {
+    ({ data: page, error: pageError } = await loadOwnPage());
+  }
 
   if (page?.onboarded_at) {
     redirect("/dashboard");

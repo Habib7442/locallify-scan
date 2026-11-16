@@ -80,7 +80,7 @@ export default async function HubPage({ params }: Props) {
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
+    <div className="min-h-screen w-full flex flex-col bg-[#18181a]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

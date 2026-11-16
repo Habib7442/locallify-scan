@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ArrowDown, ArrowUp, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Loader2, Plus, Sparkles, Trash2, Globe } from "lucide-react";
 import { LINK_TYPES, typeMeta } from "@/lib/link-types";
 import { createLink, deleteLink, reorderLink, toggleLinkActive, updateLink } from "./actions";
 
@@ -46,9 +46,11 @@ function LinkRow({
   onReorder: (direction: "up" | "down") => void;
 }) {
   const [isPending, startTransition] = useTransition();
+  const [isFetchingOg, setIsFetchingOg] = useState(false);
+  const [ogPreview, setOgPreview] = useState<{ title?: string; description?: string; image?: string } | null>(null);
   const meta = typeMeta(link.type);
 
-  function persist(patch: { type?: string; label?: string; sub?: string; destination?: string }) {
+  function persist(patch: { type?: string; label?: string; sub?: string | null; destination?: string }) {
     startTransition(async () => {
       await updateLink(link.id, patch);
     });
@@ -67,6 +69,36 @@ function LinkRow({
     startTransition(async () => {
       await deleteLink(link.id);
     });
+  }
+
+  async function handleFetchOgMetadata(urlToFetch: string) {
+    if (!urlToFetch || !urlToFetch.trim()) return;
+    const cleanUrl = urlToFetch.startsWith("http") ? urlToFetch : `https://${urlToFetch}`;
+    setIsFetchingOg(true);
+    try {
+      const res = await fetch(`/api/og-metadata?url=${encodeURIComponent(cleanUrl)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.title || data.description || data.image) {
+          setOgPreview(data);
+          const patch: Partial<EditorLink> = {};
+          if (data.title) {
+            patch.label = data.title;
+          }
+          if (data.description) {
+            patch.sub = data.description.length > 80 ? data.description.substring(0, 80) + "..." : data.description;
+          }
+          if (Object.keys(patch).length > 0) {
+            onChange(patch);
+            persist(patch);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch OG metadata", err);
+    } finally {
+      setIsFetchingOg(false);
+    }
   }
 
   return (
@@ -92,7 +124,7 @@ function LinkRow({
         </select>
 
         <div className="ml-auto flex items-center gap-1.5">
-          {(isPending || isReordering) && <Loader2 className="size-3.5 animate-spin text-[#7a7a83]" />}
+          {(isPending || isReordering || isFetchingOg) && <Loader2 className="size-3.5 animate-spin text-[#7a7a83]" />}
           <button
             type="button"
             onClick={handleToggle}
@@ -147,13 +179,96 @@ function LinkRow({
         placeholder="Sub-text (optional)"
         className="w-full rounded-[8px] border border-[#33373b] bg-[#18181a] px-3 py-2 text-sm text-white outline-none focus:border-[#54e0ff] placeholder:text-[#54545a]"
       />
-      <input
-        value={link.destination}
-        onChange={(e) => onChange({ destination: e.target.value })}
-        onBlur={(e) => persist({ destination: e.target.value })}
-        placeholder={meta.destinationPlaceholder}
-        className="w-full rounded-[8px] border border-[#33373b] bg-[#18181a] px-3 py-2 text-sm text-white outline-none focus:border-[#54e0ff] placeholder:text-[#54545a]"
-      />
+      <div className="relative w-full">
+        <input
+          value={link.destination}
+          onChange={(e) => onChange({ destination: e.target.value })}
+          onBlur={(e) => persist({ destination: e.target.value })}
+          placeholder={meta.destinationPlaceholder}
+          className="w-full rounded-[8px] border border-[#33373b] bg-[#18181a] px-3 py-2 text-sm text-white outline-none focus:border-[#54e0ff] placeholder:text-[#54545a] pr-28"
+        />
+        {link.destination && (link.destination.includes(".") || link.destination.startsWith("http")) && (
+          <button
+            type="button"
+            onClick={() => handleFetchOgMetadata(link.destination)}
+            disabled={isFetchingOg}
+            className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 text-[11px] font-medium rounded-md bg-[#54e0ff]/10 text-[#54e0ff] border border-[#54e0ff]/20 hover:bg-[#54e0ff]/20 transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+          >
+            {isFetchingOg ? <Loader2 className="size-3 animate-spin" /> : <Sparkles className="size-3" />}
+            Auto-fill
+          </button>
+        )}
+      </div>
+
+      {/* Open Graph Image & Title preview box */}
+      {ogPreview && (
+        <div className="flex items-center gap-3 p-2.5 rounded-[10px] bg-white/5 border border-white/10 text-xs text-gray-200 mt-1">
+          {ogPreview.image ? (
+            <img src={ogPreview.image} alt="" className="w-10 h-10 rounded-md object-cover border border-white/10 shrink-0" />
+          ) : (
+            <div className="w-10 h-10 rounded-md bg-[#54e0ff]/10 flex items-center justify-center text-[#54e0ff] shrink-0">
+              <Globe className="size-5" />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-white truncate">{ogPreview.title || "Website Preview"}</p>
+            {ogPreview.description && (
+              <p className="text-[11px] text-[#7a7a83] truncate">{ogPreview.description}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Booking destination helper chips */}
+      {link.type === "book" && (
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+          <span className="text-[11px] text-[#7a7a83] font-light">Quick booking options:</span>
+          <button
+            type="button"
+            onClick={() => {
+              const url = "https://calendly.com/your-name";
+              onChange({ destination: url });
+              persist({ destination: url });
+            }}
+            className="text-[11px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[#54e0ff] hover:bg-white/10 cursor-pointer transition-colors"
+          >
+            📅 Calendly URL
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const url = "https://practo.com/doctor/your-name";
+              onChange({ destination: url });
+              persist({ destination: url });
+            }}
+            className="text-[11px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[#54e0ff] hover:bg-white/10 cursor-pointer transition-colors"
+          >
+            🩺 Practo Link
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const phone = "919876543210";
+              onChange({ destination: phone });
+              persist({ destination: phone });
+            }}
+            className="text-[11px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[#25d366] hover:bg-white/10 cursor-pointer transition-colors"
+          >
+            💬 WhatsApp Phone
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const url = "https://forms.gle/your-form";
+              onChange({ destination: url });
+              persist({ destination: url });
+            }}
+            className="text-[11px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[#54e0ff] hover:bg-white/10 cursor-pointer transition-colors"
+          >
+            📝 Google Form
+          </button>
+        </div>
+      )}
     </div>
   );
 }

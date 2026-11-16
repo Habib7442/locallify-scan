@@ -4,50 +4,68 @@
 
 ## Platform
 
-web
+web — mobile-first, with a customer scan page and a staff Live Board that can be installed as a PWA on Android.
 
 ## Users
 
-- **User (anyone who signs up):** free, self-serve signup — builds and edits their own link-in-bio profile ("hub"): links, branding, background, logo; views their own analytics; downloads their QR free; can order a physical printed QR of their profile (paid).
-- **Agency admin (Habib / Locallify):** sees all users/pages for support, manages the printed-QR order queue (mark pending → printed → shipped), can open any page in a support/override capacity.
-- **Customer:** scans a printed QR, taps a button on the hub. No account, no login.
-- **Prospective user (landing-page visitor):** anyone evaluating whether to sign up. Primary audience for the marketing/landing surface — arrives cold, needs to be persuaded and act (sign up), not just informed. Broader audience than "local business owner" now that signup is open to anyone.
+- **Customer (diner):** scans the QR code on their table at a cafe or restaurant. They never log in; a WhatsApp-verified phone number and a device cookie identify them. They unlock rewards (Table Squad, Next-Visit Prize) and come back. Expect a budget Android phone on 4G, and a reader of English, Hindi or Bengali.
+- **Staff (waiter / cashier):** watches the Live Board on a phone or a cheap counter tablet, greets regulars by name, closes visits with the bill amount, redeems prizes, and marks squad rewards as served. They are often new, so every action has to be obvious.
+- **Owner (cafe owner / manager):** sets rewards, views customers, sends "Fill My Tables" offers on slow days, and manages tables, staff and branding. Usually not technical; the product must make sense in one demo.
+- **Locallify admin (Habib / Samrat):** onboards cafes in person, assigns plans and message allowances, and monitors WhatsApp message usage and cost.
 
 ## Product Purpose
 
-A Linktree-style link-in-bio platform: anyone signs up free and builds a profile page full of links that a QR code points to. The core promise, and the paid feature that funds the product: a user can order a **physical printed QR code** of their profile, and that QR always points to Locallify's own domain — so it can never expire or be held hostage by a third-party vendor the way typical "multi-link QR" tools can be.
+Dobara (दोबारा, "again") turns one-time cafe and restaurant customers into regulars. It uses a per-table QR code, WhatsApp, and four features: **Table Squad**, **Next-Visit Prize**, **Pehchaan** (staff recognise regulars) and **Fill My Tables**. It sits alongside whatever billing system the restaurant already uses.
+
+Pitch to owners: *"Your billing software takes the order. Dobara makes sure the customer comes back."*
 
 ## Positioning
 
-The mechanism a competitor selling "multi-link QR" tools (or a general link-in-bio tool without a print offering) cannot truthfully copy: the QR encodes a URL on Locallify's own domain, not a vendor's, and the physical printed copy is a real product Locallify fulfills and stands behind — not just a downloadable image. The destination behind the code stays editable forever without reprinting, and it can never be deactivated by a billing lapse, because there's no vendor sitting between the printed code and the user.
+- **Against POS / QR-ordering tools (Petpooja, DotPe):** Dobara doesn't replace billing. Its only job is bringing customers back.
+- **Against loyalty CRMs (Reelo etc.):** Dobara is simpler and cheaper, uses scratch cards and squads instead of points, and Locallify sets it up in person.
+- **Against QR menu tools:** those don't capture customers, give rewards, or help staff recognise regulars.
+- **Against delivery apps:** Dobara gives the customer list back to the restaurant.
+
+Table QR codes live on Locallify's own domain (`scan.locallifyagency.com`), so a printed card never expires and can't be held hostage by a vendor.
 
 ## Operating Context
 
-Signup is fully open and self-serve — no gatekeeping, no agency approval step. A user's digital QR is free and instant; a **physical printed copy is a separate, paid order** that Habib fulfills manually (prints and ships it himself in v1 — no print-on-demand integration yet). Most users will never pick a business vertical; verticals are an optional preset for business-type profiles, not a requirement.
+- The first market is Silchar: small and mid-size cafes, family restaurants, and dessert or tea spots.
+- Locallify onboards each cafe in person: prints the table cards, installs the Live Board, and trains staff for 20 minutes.
+- Messaging runs on one shared Dobara WhatsApp number in v1, and every message names the cafe.
+- The pilot is 3 cafes, free for 30 days. Success means at least 2 of the 3 agree to pay.
 
 ## Capabilities and Constraints
 
-- MVP scope (PRD §11): Clerk auth with **open self-serve signup**; auto-created page on signup via webhook; user editor (link add/edit/reorder/toggle, logo upload, background, accent colour, theme, with live phone preview); public hub reading from the database with non-blocking scan/tap logging; free QR download (PNG + SVG); **Order Printed QR** (payment + shipping address + order record); agency dashboard as an order-fulfillment queue rather than a client-provisioning tool; one vertical template (restaurant or clinic) as an optional preset.
-- Explicitly undecided (PRD §13): payment provider for Order Printed QR (Razorpay vs. Stripe vs. other); price of a printed QR order and shipping scope (domestic vs. international); which vertical ships first; final redirect domain; whether an agency-managed paid service tier still exists alongside self-serve.
-- No automated print-fulfillment in v1 by design (PRD §2 non-goals) — every printed-QR order is fulfilled by hand until volume justifies automating it.
-- The public `/sign-up` route already in the codebase is now correctly aligned with product intent (previously flagged as a conflict under the old agency-provisioned model — that constraint no longer applies).
+- **Scope:** v1 is milestones M0–M5 (`PRD.md` §17), and M1 comes first: scan → verify → Live Board ding in under 3 s.
+- **Non-goals:** no POS, billing, KOT, inventory or GST invoicing; no food ordering; no customer app; no points loyalty; no per-cafe WhatsApp numbers in v1.
+- **WhatsApp limits:** marketing messages cost money and can damage the number's quality rating, so campaigns are capped and opt-out is instant.
+- **Performance:** the scan page must be interactive in under 2 s on 4G and weigh under 300 KB.
+- **Proposed pricing:** Starter ₹1,499/mo, Growth ₹2,499/mo, extra messages about ₹1.2 each, and a one-time setup fee of ₹2,000–5,000 (`PRD.md` §16). This is a proposal, not final.
 
 ## Brand Commitments
 
-Name: **Locallify Scan** — confirmed product name (supersedes "Locallify Links," the PRD's original placeholder). A real logo exists at `public/logo_transparent.png`, with a cropped icon-only asset at `public/logo-icon.png`.
+- **Locallify Scan** is the QR platform: permanent codes hosted on Locallify's own domain.
+- **Dobara** is the product sold to restaurants. It always carries **"by Locallify"** in small text, for example in the wordmark lockup, the WhatsApp display name "Dobara by Locallify", table cards, and the footers of the scan page and Live Board.
+
+The Locallify logo exists at `public/logo_transparent.png`, and the icon-only version at `public/logo-icon.png`. No Dobara-specific logo exists yet.
+
+The customer-facing tone is warm, casual and Hinglish-friendly ("Scan karo, aaj ka inaam dekho 🎁").
 
 ## Evidence on Hand
 
-One real, usable proof point: a real Locallify client was hit with a roughly ₹2,000 renewal demand after a free trial expired on an already-printed third-party QR code (PRD §1). Usable anonymized — do not name the real client. No product screenshots, testimonials, case studies, pricing, or payment-provider details exist yet; future work must not fabricate any of these.
+There are no pilot results, testimonials or case studies yet. Future work must not invent any. One prior proof point is usable for the domain-ownership promise: a real Locallify client was hit with a renewal demand of about ₹2,000 after a free trial expired on an already-printed third-party QR code. Use it anonymised and never name the client.
 
 ## Product Principles
 
-1. The redirect always lives on Locallify's own domain, never a third-party vendor's — this is the trust position everything else is built around.
-2. Signup is free and open to anyone; the paid product is the physical printed QR, not access to the platform itself.
-3. RLS enforces that a user can never see or touch another user's page — the agency admin's cross-user access exists for support and order fulfillment, not routine editing.
-4. Vertical templates are optional presets, never a requirement — most users will skip them entirely.
-5. Manual fulfillment (Habib prints and ships each order by hand) is the deliberate v1 choice, not a stopgap to apologize for — automate only once volume justifies it.
+1. **Never replace the restaurant's billing.** Dobara works alongside it with zero POS changes.
+2. **Make it simple enough for one demo.** Defaults should work out of the box, and Locallify sets everything up.
+3. **The customer data belongs to the cafe.** It is never shared across cafes and never sold.
+4. **Prevent abuse by design.** Prizes are drawn on the server, tied to a phone number, and only redeemed after staff confirm.
+5. **Respect the customer's WhatsApp.** Opt-in is explicit, STOP is easy, frequency is capped, and nobody gets spammed.
 
 ## Accessibility & Inclusion
 
-The public hub must be mobile-first, fast, and accessible: visible focus states and reduced-motion respected (PRD §5.3). No further specific accessibility standard has been confirmed.
+- **Languages:** English, Hindi and Bengali, with all strings in translation files.
+- **Interaction:** large tap targets, readable contrast, nothing conveyed by colour alone, and reduced motion respected (the scratch card has a "Tap to reveal" fallback).
+- **Devices:** must work on budget Android phones in Chrome.

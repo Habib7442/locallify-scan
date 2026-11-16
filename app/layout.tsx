@@ -18,17 +18,17 @@ const bodySans = Hanken_Grotesk({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   ...buildMetadata({
-    title: "Locallify Scan — QR codes that never expire",
+    title: "Dobara by Locallify — turn first-time diners into regulars",
     description:
-      "Your printed QR code lives on our domain, so it never expires and can't be held hostage.",
+      "A QR on every table, WhatsApp, and prizes that only work on the next visit. Dobara brings cafe and restaurant customers back — alongside your existing billing.",
     path: "/",
     keywords: [
-      "Locallify Scan",
-      "link in bio tool",
-      "QR code that never expires",
-      "QR code for restaurants",
-      "QR code for shops",
-      "QR menu",
+      "Dobara",
+      "restaurant loyalty program India",
+      "cafe customer retention",
+      "WhatsApp marketing for restaurants",
+      "repeat customers restaurant",
+      "table QR code",
     ],
   }),
   ...(GOOGLE_SITE_VERIFICATION

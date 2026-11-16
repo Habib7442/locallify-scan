@@ -56,7 +56,7 @@ export async function createLink(input: {
 
 export async function updateLink(
   id: string,
-  input: { type?: string; label?: string; sub?: string; destination?: string }
+  input: { type?: string; label?: string; sub?: string | null; destination?: string }
 ): Promise<ActionResult> {
   const { userId } = await auth();
   if (!userId) return { success: false, error: "Not signed in." };
@@ -68,7 +68,7 @@ export async function updateLink(
   const patch: Record<string, string | null> = {};
   if (input.type !== undefined) patch.type = input.type;
   if (input.label !== undefined) patch.label = input.label.trim();
-  if (input.sub !== undefined) patch.sub = input.sub.trim() || null;
+  if (input.sub !== undefined) patch.sub = input.sub ? input.sub.trim() || null : null;
   if (input.destination !== undefined) patch.destination = input.destination.trim();
 
   const { error } = await supabase.from("links").update(patch).eq("id", id);

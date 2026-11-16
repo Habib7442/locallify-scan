@@ -11,11 +11,16 @@ import { LinksTab, type EditorLink } from "./links-tab";
 import { SettingsTab } from "./settings-tab";
 import { BrandingTab } from "./branding-tab";
 import { QrTab } from "./qr-tab";
+import { OrdersTab, type OrderRecord } from "./orders-tab";
+import { VerticalTab } from "./vertical-tab";
+import type { VerticalConfig } from "@/components/hub/VerticalFeatures";
 
 const TAB_LABELS = {
   links: { full: "Links", short: "Links" },
   branding: { full: "Branding", short: "Brand" },
+  vertical: { full: "Business Features", short: "Features" },
   share: { full: "Share & QR", short: "QR" },
+  orders: { full: "Orders", short: "Orders" },
   settings: { full: "Settings", short: "Settings" },
 } as const;
 
@@ -46,12 +51,18 @@ type PageData = {
 export function DashboardEditor({
   page,
   initialLinks,
+  initialOrders = [],
 }: {
   page: PageData;
   initialLinks: EditorLink[];
+  initialOrders?: OrderRecord[];
 }) {
-  const [tab, setTab] = useState<"links" | "branding" | "share" | "settings">("links");
+  const [tab, setTab] = useState<"links" | "branding" | "vertical" | "share" | "orders" | "settings">("links");
   const [links, setLinks] = useState<EditorLink[]>(initialLinks);
+  const [orders] = useState<OrderRecord[]>(initialOrders);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [vertical, setVertical] = useState<string | null>((page as any).vertical || "generic");
+  const [verticalConfig, setVerticalConfig] = useState<VerticalConfig>({});
   const [slug, setSlug] = useState(page.slug);
   const [active, setActive] = useState(page.active);
   const [logoPath, setLogoPath] = useState(page.logo_path);
@@ -202,7 +213,7 @@ export function DashboardEditor({
           </div>
 
           <div className="flex gap-1 mb-8 p-1 rounded-[12px] bg-white/[0.03] border border-[#33373b] w-full sm:w-fit overflow-x-auto">
-            {(["links", "branding", "share", "settings"] as const).map((t) => (
+            {(["links", "branding", "vertical", "share", "orders", "settings"] as const).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -257,7 +268,16 @@ export function DashboardEditor({
                   }}
                 />
               )}
-              {tab === "share" && <QrTab slug={slug} logoPath={logoPath} accent={accent} />}
+              {tab === "vertical" && (
+                <VerticalTab
+                  vertical={vertical}
+                  onVerticalChange={setVertical}
+                  config={verticalConfig}
+                  onConfigChange={setVerticalConfig}
+                />
+              )}
+              {tab === "share" && <QrTab slug={slug} logoPath={logoPath} accent={accent} pageId={page.id} />}
+              {tab === "orders" && <OrdersTab orders={orders} />}
               {tab === "settings" && (
                 <SettingsTab
                   savedSlug={slug}

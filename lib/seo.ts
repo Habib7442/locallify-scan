@@ -15,12 +15,11 @@ export const GOOGLE_SITE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERI
 
 // Site-wide defaults, prepended to every page's own keywords below.
 const DEFAULT_KEYWORDS = [
-  "QR code generator",
-  "link in bio",
-  "permanent QR code",
-  "printed QR code",
-  "QR code for business",
-  "digital business card",
+  "Dobara by Locallify",
+  "Locallify",
+  "QR code for restaurants",
+  "restaurant customer loyalty",
+  "WhatsApp for restaurants",
 ];
 
 export function buildMetadata({

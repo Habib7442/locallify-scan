@@ -1,9 +1,11 @@
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
-import { LivePreview } from "@/components/landing/LivePreview";
-import { WhyUs } from "@/components/landing/WhyUs";
+import { Problem } from "@/components/landing/Problem";
+import { Features } from "@/components/landing/Features";
 import { HowItWorks } from "@/components/landing/HowItWorks";
-import { Verticals } from "@/components/landing/Verticals";
+import { WhyUs } from "@/components/landing/WhyUs";
+import { Pricing } from "@/components/landing/Pricing";
+import { Faq } from "@/components/landing/Faq";
 import { Footer } from "@/components/landing/Footer";
 
 export default function Home() {
@@ -12,10 +14,12 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
-        <LivePreview />
-        <WhyUs />
+        <Problem />
+        <Features />
         <HowItWorks />
-        <Verticals />
+        <WhyUs />
+        <Pricing />
+        <Faq />
       </main>
       <Footer />
     </div>

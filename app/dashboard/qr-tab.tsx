@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import type QRCodeStylingType from "qr-code-styling";
 import type { CornerDotType, CornerSquareType, DotType } from "qr-code-styling";
-import { Check, Copy, Lock } from "lucide-react";
+import { Check, Copy, ShoppingBag } from "lucide-react";
 import { SITE_URL } from "@/lib/site";
 import { getPublicAssetUrl } from "@/lib/storage";
+import { OrderPrintedQrModal } from "@/components/checkout/OrderPrintedQrModal";
 
 const INK = "#0a0a0b";
 
@@ -25,10 +27,12 @@ export function QrTab({
   slug,
   logoPath,
   accent,
+  pageId,
 }: {
   slug: string;
   logoPath: string | null;
   accent: string | null;
+  pageId?: string;
 }) {
   const hubUrl = `${SITE_URL}/${slug}`;
   const displayUrl = hubUrl.replace(/^https?:\/\//, "");
@@ -38,6 +42,7 @@ export function QrTab({
   const [includeLogo, setIncludeLogo] = useState(false);
   const [style, setStyle] = useState<QrStyleKey>("classic");
   const [copied, setCopied] = useState(false);
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
 
   const logoUrl = logoPath ? getPublicAssetUrl(logoPath) : null;
 
@@ -193,19 +198,51 @@ export function QrTab({
       </div>
 
       <div className="border-t border-[#33373b] pt-8">
-        <div className="flex items-center justify-between gap-4 rounded-[12px] border border-[#33373b] bg-white/[0.02] p-5">
-          <div>
-            <h2 className="text-sm font-medium text-white mb-1">Order Printed QR</h2>
-            <p className="text-sm text-[#7a7a83]">
-              Get this QR code printed and shipped, ready to display.
-            </p>
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 rounded-[22px] border border-[#54e0ff]/30 bg-gradient-to-r from-[#54e0ff]/[0.08] to-transparent p-5 sm:p-6 shadow-xl">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 min-w-0 w-full lg:w-auto">
+            {/* Acrylic Stand Image Preview */}
+            <div
+              className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-[16px] overflow-hidden border border-white/20 shrink-0 shadow-xl group cursor-pointer"
+              onClick={() => setIsOrderModalOpen(true)}
+            >
+              <Image
+                src="/qr_acrylic_stand.png"
+                alt="Acrylic QR Code Standee"
+                fill
+                sizes="128px"
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                <h2 className="text-base sm:text-lg font-bold text-white leading-tight">Order Physical Printed QR</h2>
+                <span className="px-2.5 py-0.5 rounded-full bg-[#54e0ff]/20 text-[#54e0ff] text-[10px] font-mono uppercase tracking-wider font-semibold whitespace-nowrap shrink-0">
+                  Direct Shipping
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-[#7a7a83] max-w-md font-light leading-relaxed">
+                Get this QR code printed on a premium clear acrylic desktop stand or outdoor vinyl sticker. <strong className="text-emerald-400 font-normal">FREE local delivery in Silchar</strong> • Express courier shipping across India.
+              </p>
+            </div>
           </div>
-          <span className="inline-flex items-center gap-1.5 shrink-0 rounded-full border border-[#33373b] px-3 py-1.5 text-xs font-medium text-[#7a7a83]">
-            <Lock className="size-3.5" />
-            Coming soon
-          </span>
+
+          <button
+            type="button"
+            onClick={() => setIsOrderModalOpen(true)}
+            className="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-[12px] bg-[#54e0ff] hover:bg-[#29adff] px-5 py-3 text-sm font-bold text-[#18181a] shadow-[0_0_20px_rgba(84,224,255,0.25)] transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer shrink-0"
+          >
+            <ShoppingBag className="size-4" />
+            <span className="whitespace-nowrap">Order Printed Stand — ₹499</span>
+          </button>
         </div>
       </div>
+
+      <OrderPrintedQrModal
+        isOpen={isOrderModalOpen}
+        onClose={() => setIsOrderModalOpen(false)}
+        pageId={pageId}
+        slug={slug}
+      />
     </div>
   );
 }

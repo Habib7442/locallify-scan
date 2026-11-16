@@ -1,37 +1,60 @@
 # AGENTS.md
 
-You are a **principal-level full-stack engineer and AI implementation agent** working on **Locallify Scan**, a Linktree-style link-in-bio platform. Anyone signs up free and builds a profile page full of links; the paid feature is ordering a physical printed QR code of that profile, and the QR always points at Locallify's own domain so it can never expire or be held hostage by a third-party vendor.
+You are a **principal-level full-stack engineer and AI implementation agent** working on **Dobara** (दोबारा — "again"), a restaurant & cafe repeat-visit product built on the **Locallify Scan** QR platform, in this codebase. Brand structure: **Locallify Scan** is the QR platform; **Dobara** is the product sold to restaurants, always shown with **"by Locallify"** in small text. Diners scan a per-table QR, verify their WhatsApp number, and get rewards that bring them back; staff recognise regulars on a live board; owners fill empty tables with one-tap WhatsApp offers. Dobara works alongside the restaurant's existing billing/POS — it never replaces it.
 
 Your job is to understand the request, use the right project skills, create a clear implementation prompt, ask for approval, then implement.
 
 <!-- BEGIN:nextjs-agent-rules -->
-
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
 <!-- END:nextjs-agent-rules -->
 
 ---
 
 # 1. Product
 
-Locallify Scan gives anyone a free self-service editor to manage a mobile landing page ("hub") that their QR code points to. Signup is fully open — no agency gatekeeping. The QR always lives on Locallify's own domain, so a printed code never expires and can never be held hostage by a third-party vendor — that promise is the reason this product exists (see `PRD.md` §1). The paid feature that funds it: **Order Printed QR** — a user pays to have their profile's QR code physically printed and shipped, fulfilled manually by Habib in v1.
+`PRD.md` is the source of truth. Dobara's pitch: *"Your billing software takes the order. Dobara makes sure the customer comes back."*
 
-Build only the MVP first (`PRD.md` §11):
+Four features (`PRD.md` §7):
 
-- Clerk auth with **open self-serve signup** + Supabase RLS isolation
-- auto-created page on signup (via Clerk webhook)
-- user editor: link add/edit/reorder/toggle, logo upload, background (solid or image), accent colour, theme, with live phone preview
-- public hub reading from the database, with non-blocking scan/tap logging
-- free QR download (PNG + SVG)
-- **Order Printed QR**: payment + shipping address capture + order record
-- agency dashboard: order queue (pending/printed/shipped), user/page lookup for support
-- one vertical template (restaurant or clinic — see Open decisions) as an **optional** preset, not a signup gate
+- **Table Squad** — everyone at a table scans + verifies → the table unlocks a reward (§7.4)
+- **Next-Visit Prize** — staff close the visit with the bill amount → each customer gets a scratch card whose prize is only valid on the next visit (§7.5)
+- **Pehchaan (Live Board)** — real-time staff screen that dings when a known customer scans, with name, visit count, notes and pending prizes (§7.6)
+- **Fill My Tables** — owner sends a time-limited WhatsApp offer to regulars on a slow day, with a cost estimate first (§7.7)
 
-Do not build V2/Later items (remaining verticals, analytics charts, automated print-on-demand fulfillment, smart routing, custom domains, import tooling) unless explicitly asked. Do not overbuild.
+Supporting pieces: per-table QR codes (§7.1), the customer scan page (§7.2), click-to-chat WhatsApp verification (§7.3), the owner panel (§7.8), and the Locallify admin (§7.9).
+
+Build in milestone order (`PRD.md` §17). **M1 is the priority** — ship it and test it in one real cafe before going wide:
+
+| # | Milestone | Done when |
+|---|---|---|
+| M0 | Meta & accounts, webhook endpoint stub | Test message received and replied via webhook |
+| M1 | Per-table QR → scan page → click-to-chat verify → Live Board ding | A verified scan rings the Live Board in < 3 s |
+| M2 | Close visit + scratch card + redeem + day-10 reminder | Full return-visit loop works end to end |
+| M3 | Table Squad | 4 test phones unlock a dessert |
+| M4 | Fill My Tables + owner panel + opt-outs + allowances | Campaign sends, opt-outs respected, usage tracked |
+| M5 | Pilot polish: Hindi/Bengali, print cards, onboarding, error tracking, admin | 3 pilot cafes live |
+
+Do not build v2+ items (`PRD.md` §21) — Google review requests, Dish Passport, per-cafe WhatsApp numbers, POS integrations, weekly owner reports, non-restaurant presets — unless explicitly asked. Do not build anything in `PRD.md` §3 non-goals: no POS/billing/KOT/inventory/GST invoicing, no food ordering, no customer app, no points loyalty. Do not overbuild.
+
+## What happens to the existing Locallify Scan code
+
+The repo started as a link-in-bio product ("Locallify Scan"). Dobara replaced it as the main product on 2026-11-16. Existing code is **reusable infrastructure**, not target scope:
+
+| Existing piece | Status under Dobara |
+|---|---|
+| Clerk auth, `proxy.ts`, Clerk `user.created` webhook | Reuse; extend for Clerk Organizations (owner/staff) |
+| Supabase clients (`lib/supabase/*`), RLS pattern, `private.is_agency_admin()` | Reuse; new tables follow the same pattern scoped by business |
+| Branding system (`pages` theme/fonts/colours/logo/background, `branding-tab.tsx`, `lib/themes.ts`, `lib/fonts.ts`) | Reuse for the scan page (§7.2 "reuses Locallify Scan branding") |
+| Public hub `app/[slug]`, `components/hub/*`, links editor | Keep working; may serve as the cafe's general page. Not Dobara scope — don't extend without asking |
+| `scans` table + logging | Reuse for `qr_scanned` (§7.1 "reuses existing scan analytics") |
+| QR generation (`qr-code-styling`, `qr-tab.tsx`) | Reuse for per-table QR cards |
+| Order Printed QR / Razorpay (`app/api/create-order`, `app/api/verify-payment`, `components/checkout/*`, `orders-tab.tsx`, `orders` table) | **Parked.** Don't extend or delete without asking |
+| Vertical presets (`vertical-tab.tsx`, `VerticalFeatures.tsx`, `vertical_templates`) | **Parked.** Superseded by Dobara for restaurants |
+| Landing page / pricing (`components/landing/*`, `app/pricing`, `components/brand/DobaraWordmark.tsx`) | Repositioned for Dobara (2026-11-16, `prompts/dobara-landing-page.md`). CTAs open WhatsApp to Locallify (`lib/site.ts`); no self-signup CTA |
 
 ---
 
@@ -59,64 +82,74 @@ Do not code before creating the prompt unless the user explicitly says to skip p
 
 Use only these skills:
 
-- `.agents/skills/clerk` — routes to the specific Clerk skill needed (setup, Next.js patterns, custom UI/appearance, organizations, webhooks, CLI, backend API)
-- `.agents/skills/supabase` — schema, RLS policies, Storage buckets, SSR client patterns, migrations
-- `.agents/skills/supabase-postgres-best-practices` — load before writing or changing anything that lives in Postgres: tables, columns, RLS policies, indexes, migrations
+- `.agents/skills/clerk` — routes to the specific Clerk skill needed (setup, Next.js patterns, **organizations** for owner/staff roles, webhooks, custom UI, CLI, backend API)
+- `.agents/skills/supabase` — schema, RLS, **Realtime**, Storage, SSR client patterns, migrations, pg_cron
+- `.agents/skills/supabase-postgres-best-practices` — load before writing or changing anything that lives in Postgres: tables, columns, RLS policies, indexes, migrations, triggers, functions, cron jobs
 
 Use them for:
 
-- `node_modules/next/dist/docs/`: Next.js routing, server/client boundaries, route handlers and Server Actions, UI patterns for this Next.js version
-- `clerk`: open self-serve sign-in/up, sessions, webhooks (auto-creating a `profiles` + `pages` row on signup), protecting user-editor and agency routes
-- `supabase`: `pages` / `links` / `scans` / `orders` schema, RLS policies keyed on the Clerk user ID in the JWT, Storage bucket policies for logos/backgrounds/gallery images
+- `node_modules/next/dist/docs/`: routing, server/client boundaries, route handlers and Server Actions, cookies, PWA/manifest, UI patterns for this Next.js version
+- `clerk`: owner/staff/admin sign-in, Clerk Organizations (one org per business, `owner` and `staff` roles), inviting/removing staff, protecting owner/staff/admin routes
+- `supabase`: Dobara schema, RLS keyed on Clerk identity + business membership, Realtime subscriptions for the Live Board and scan page, scheduled jobs
 
 Do not invent new skills.
 
-For Tailwind, shadcn/ui, any QR-generation library, and Razorpay (the confirmed payment provider), use existing project patterns, package docs, and `node_modules/next/dist/docs/`.
+For the WhatsApp Cloud API, Web Push, Tailwind, shadcn/ui and `qr-code-styling`, use Meta's official docs, package docs, existing project patterns and `node_modules/next/dist/docs/`.
 
 ---
 
 # 4. Prompt files
 
-Prompt files live in the `prompts/` directory. Use names like:
+Prompt files live in `prompts/`. Name them after the milestone and feature, e.g.:
 
-- `prompts/rls-policies.md`
-- `prompts/client-admin-links-tab.md`
-- `prompts/public-hub-page.md`
-- `prompts/qr-download.md`
-- `prompts/agency-dashboard.md`
+- `prompts/m0-whatsapp-webhook-stub.md`
+- `prompts/m1-dobara-schema-and-rls.md`
+- `prompts/m1-table-qr-and-scan-page.md`
+- `prompts/m1-whatsapp-verify.md`
+- `prompts/m1-live-board.md`
+- `prompts/m2-close-visit-and-scratch-card.md`
 
 Each prompt must include:
 
-- goal
+- goal (and which `PRD.md` section + milestone it serves)
 - skills read
 - existing code inspected
 - decisions or assumptions
 - files likely to change
 - implementation requirements
 - security requirements
-- acceptance criteria
+- acceptance criteria (copy the relevant ones from `PRD.md`)
 - checks to run
 - exact manual test steps expected after implementation
 
-For UI tasks, also include visual interpretation, layout, typography, spacing, colors, responsiveness, and pixel-perfect expectations — every admin panel screen needs a live phone preview beside the editor (`PRD.md` §5.2).
+For UI tasks, also include visual interpretation, layout, typography, spacing, colors, responsiveness, and pixel-perfect expectations. The customer scan page and the Live Board are **mobile-first on budget Android phones** — design for that first.
 
 ---
 
 # 5. Architecture
 
-Keep these layers separate:
+Keep these surfaces separate:
 
-- **Public hub**: unauthenticated, server-rendered route at the hub's slug (eventually `<domain>/<slug>`). Reads only active pages and active links. Logs a scan on view and a tap on each button click, non-blocking.
-- **User editor**: authenticated via Clerk, scoped by RLS to the signed-in user's own page, links, orders, and assets only.
-- **Agency dashboard**: authenticated, agency-admin role only. Read access across all users for support; full read/write on `orders` to manage fulfillment status (pending → printed → shipped); "open any page" is a support override, not the primary onboarding path.
-- **Order Printed QR**: a server-side flow — verify payment with the provider (webhook or server-side confirm) before creating/advancing an `orders` row; never trust a client-submitted "paid" status.
-- **Mutations**: prefer Server Actions / thin route handlers for editor writes. Every write must be scoped by the caller's Clerk identity and re-checked by RLS — never trust a client-side role check alone.
-- **Database**: Supabase Postgres. RLS is the tenant-isolation mechanism, enforced in the database, not just the UI (`PRD.md` §7).
-- **Storage**: Supabase Storage buckets for logos, backgrounds, and gallery images, with policies so a user can only write to their own page's assets.
-- **Auth**: Clerk handles open self-serve sign-in/up and sessions. A `user.created` webhook creates the matching `profiles` + `pages` rows automatically. Clerk is registered as a third-party auth provider in Supabase; RLS policies read the Clerk user ID from the JWT.
-- **QR**: generated from the hub's permanent Locallify-domain URL. The QR itself never needs to change — only the destination data behind it does. The same generated design backs both the free digital download and the paid physical print order.
+- **Customer scan page** (`/r/[business]/t/[table]`): no login. Server-rendered, branded with the cafe's existing branding settings, < 2 s interactive on 4G, < 300 KB page weight. Creates or joins a table session and issues a verify code. Customer identity is a **signed, httpOnly device cookie** (180 days) linked to a WhatsApp-verified phone — never Clerk.
+- **WhatsApp webhook** (`/api/whatsapp/webhook`): GET handles Meta verification; POST verifies `X-Hub-Signature-256` against the app secret **before** parsing anything, matches verify codes to business + table + session, handles STOP/opt-out, records delivery statuses. It runs with the service role because there is no user JWT. It must be idempotent: dedupe on `wa_message_id`.
+- **Live Board (Pehchaan)**: staff (Clerk, org role `staff` or `owner`). Installable PWA, Supabase Realtime filtered by business, sound + vibration alerts, auto-reconnect, "Reconnecting…" banner, queued retrying actions. Must survive a full day with the screen on (clean up subscriptions, no leaks).
+- **Owner panel**: Clerk org role `owner`. Home stats, customers, rewards settings, tables + QR cards, staff, campaigns, branding, plan & usage.
+- **Locallify admin**: Clerk super-admin (the existing `agency_admin` role). Manages businesses, plans, message allowances; read-only impersonation with an audit log.
+- **Scheduled jobs**: Vercel Cron or Supabase pg_cron for session expiry (3 h), prize expiry, day-10 reminders. Cron route handlers must check a shared secret.
+- **Mutations**: prefer Server Actions or thin route handlers. Every staff/owner write is scoped by the caller's Clerk identity + business membership and re-checked by RLS. Never trust a client-side role check alone.
 
-UI must not bypass RLS by using the service role from client-triggered code. The documented exceptions are the anonymous public-hub read/scan-log path and payment-provider webhook handlers (`PRD.md` §7), which may run public or with the service role specifically because they have no user JWT to check.
+## Trust rules that are easy to get wrong
+
+- **Prize outcomes are decided server-side** when the visit is closed (weighted draw from the owner's prize list). "Scratching" only reveals a stored result — the client never picks or submits a prize.
+- **Redemption needs staff confirmation** on the Live Board. A customer-side action can never mark a prize, squad reward or campaign offer as redeemed.
+- **Verify codes** are single-use, expire after 15 minutes, and are only consumed by the signature-verified webhook. One phone counts once per table session.
+- **Phone masking for staff** (last 4 digits) is enforced in what the server returns (view / server-side select), not just hidden in the UI. Only owners can export customers.
+- **Marketing sends** only go to opted-in customers with no `opted_out_at`, and respect the caps: 1 campaign per business per day, max 4 marketing messages per customer per month, and the business's monthly allowance. Check all of these server-side immediately before sending.
+- **Anonymous scan page live updates** must not open broad anon `select` access on session/customer tables. Use Realtime Broadcast on an unguessable per-session channel, or poll a server route that returns only that device's own state.
+
+The documented service-role exceptions are: the anonymous scan-page server path, the WhatsApp webhook, cron jobs, and the Clerk webhook — each because there is no user JWT. One more narrow exception: `lib/provisioning.ts` (`provisionSignedInUser`) creates a signed-in user's own missing `profiles` + `pages` rows from `/dashboard` / `/onboarding` when the signup webhook was missed — identity comes only from the Clerk session, never request input, and new rows are always role `user`.
+
+Any page/server read of "my page" must filter by `owner_clerk_id = auth().userId` — never rely on RLS alone with `.single()`, because RLS lets an `agency_admin` read every page. UI-triggered code must never use the service role to bypass RLS.
 
 ---
 
@@ -124,122 +157,126 @@ UI must not bypass RLS by using the service role from client-triggered code. The
 
 Use:
 
-- Next.js (Vercel)
-- Clerk (auth)
-- Supabase (Postgres, Storage)
-- Tailwind CSS
-- shadcn/ui
-- `qr-code-styling` for QR generation (confirmed) — supports PNG + SVG export and an optional centre logo
-- Razorpay for Order Printed QR payments (confirmed — already activated)
+- Next.js (App Router) on Vercel — this existing codebase
+- Clerk — owner/staff/admin auth, Clerk Organizations for business membership and roles
+- Supabase — Postgres (target region: Mumbai), RLS, Realtime, Storage (logos, backgrounds, QR card PDFs), pg_cron if chosen
+- WhatsApp Cloud API (Meta) — one shared Dobara number in v1
+- Web Push + PWA manifest for Live Board alerts
+- Tailwind CSS, shadcn/ui
+- `qr-code-styling` for per-table QR codes and print cards
+- Error tracking (e.g. Sentry) — M5
 
 Do not use:
 
-- Supabase Auth as the identity system — Clerk is the auth provider; Supabase is database + storage only (`PRD.md` §7)
-- A separate backend framework or server — everything runs in Next.js on Vercel
+- Supabase Auth as the identity system — Clerk handles staff/owner/admin; customers use WhatsApp + device cookie
+- A separate backend server — everything runs in Next.js on Vercel (+ Supabase cron if chosen)
 - Client-side-only permission checks in place of RLS
-- Automated print-on-demand fulfillment in v1 — printed QR orders are fulfilled manually by Habib until volume justifies automating it (`PRD.md` §2)
+- Any POS/billing integration, points system, or customer login (`PRD.md` §3)
+- Per-cafe WhatsApp numbers / Embedded Signup (v2)
 
 ---
 
-# 7. Data model — Supabase source of truth
+# 7. Data model
 
-Supabase is the source of truth for app data (descriptive, not SQL — see `PRD.md` §6 for the authoritative version):
+The authoritative descriptive model is `PRD.md` §10. Dobara adds these tables, all scoped by `business_id` and protected by RLS so one business can never read another's data:
 
-- `agencies` — id, name, domain, owner_clerk_id (one row for Locallify; every user's page belongs to it)
-- `profiles` — clerk_user_id, agency_id, role, name, email (maps a Clerk user to a role: `agency_admin` / `user`; created automatically on signup via webhook)
-- `pages` — id, agency_id, owner_clerk_id, slug, display_name, tagline, vertical (nullable), theme, accent, logo_path, bg_type (solid/image), bg_value, active, subscription_status (trialing/active/past_due/cancelled), trial_ends_at — one hub per user; `vertical` is nullable since most users won't set one. `subscription_status`/`trial_ends_at` are set once at signup by the webhook; nothing enforces them yet (no billing, no gating) — tracking only until the paywall is built
-- `links` — id, page_id, type, label, sub, destination, position, active — ordered by position
-- `scans` — id, page_id, link_id (nullable), created_at, device, country, referrer — link_id null = hub view, set = button tap
-- `orders` — id, page_id, owner_clerk_id, status (pending/printed/shipped/cancelled), shipping_address, price, currency, payment_reference, created_at, shipped_at — printed-QR purchase, fulfilled manually by the agency admin
-- `vertical_templates` — vertical, default_links (json), signature_feature — seed data used when a user opts into a vertical
+- `tables` — code (e.g. "T4", unique per business), label, qr_slug, is_active
+- `customers` — one row per phone per business: phone_e164, name, birthday, language, opted_in, opted_in_at, opted_out_at, notes, visit_count, last_visit_at; unique (business_id, phone_e164)
+- `table_sessions` — table_id, declared_size, status (open/billing/closed/expired), bill_amount, opened_at, closed_at, closed_by
+- `session_members` — session_id, customer_id (nullable until verified), device_id, verify_code, verify_expires_at, verified_at; unique (session_id, customer_id)
+- `squad_rewards` — session_id (unique), reward_text, unlocked_at, served_at
+- `reward_settings` — squad_enabled, squad_reward_text, squad_min_size, scratch_enabled, scratch_min_bill, prize_validity_days, reminder_enabled, prizes (jsonb `[{label, weight}]`)
+- `prizes` — customer_id, session_id, label, code, status (unscratched/active/redeemed/expired), valid_from, valid_until, redeemed_at, redeemed_by
+- `campaigns` — offer_text, audience (jsonb), valid_until, est_cost, sent/delivered/read/redeemed counts, created_by
+- `message_log` — customer_id, direction (in/out), category (service/utility/marketing/authentication), template_name, wa_message_id (unique, for idempotency), status, cost_inr
+- `business_plans` — plan, monthly_message_allowance, extra_message_price, period_start
 
-Images (logos, backgrounds, gallery) live in Supabase Storage, referenced by storage path from `pages` / a `gallery` table.
+Indexes required: `customers(business_id, phone_e164)`, `table_sessions(business_id, status)`, `prizes(customer_id, status)`, `message_log(business_id, created_at)`, plus an index on every foreign key.
 
-When any field is added or changed, keep the schema, generated types, and this section in sync.
+Existing tables still in the schema (`supabase/schema.sql`): `agencies`, `profiles`, `pages` (branding lives here), `links`, `scans`, `orders` (parked), `vertical_templates` (parked).
+
+**What `business_id` points to is an open decision** (§15). Until it's settled, don't write Dobara migrations. Settle it in the first M1 schema prompt.
+
+Migrations go in `supabase/migrations/NNNN_name.sql` (next is `0009`), and `supabase/schema.sql` is kept in sync. Whenever a field is added or changed, keep the schema, the types, this section and `PRD.md` §10 in sync.
 
 ---
 
 # 8. Roles and permissions
 
-| Role | Can do |
-|---|---|
-| Agency admin | See all users/pages for support, manage the printed-QR order queue (mark printed/shipped), open/edit any page in a support capacity |
-| User | Sign up free, edit their own hub only (links, branding, background, logo), view their own analytics, download their QR free, order a printed QR (paid) |
-| Customer | View the public hub, tap a button — no account |
+| Role | Auth | Can do |
+|---|---|---|
+| Customer | None (WhatsApp-verified phone + signed device cookie) | Scan, join a table session, verify, see own squad progress / prizes, scratch own prize |
+| Staff | Clerk, org role `staff` | Live Board: see open tables and scanning customers (phones masked), add notes, set squad size, close visit with bill amount, redeem prizes, mark squad reward served. No owner settings, no exports |
+| Owner | Clerk, org role `owner` | Everything staff can do in their business + rewards settings, tables & QR cards, customers (unmasked) & export, staff invite/remove, campaigns, branding, plan & usage |
+| Locallify admin | Clerk, `agency_admin` (super-admin) | Create/manage businesses, assign plans and message allowances, view message usage/cost per business, read-only impersonation with audit log |
 
-- User: read/write own page, own links, own assets, own orders; read own scans. No access to any other user's data.
-- Agency admin: read access to all pages/links/scans (support); full read/write on `orders` (fulfillment); can open any page in a support/override capacity.
-- Public: read active pages + active links only; insert scans.
-
-Row-level isolation must be enforced in RLS, not only in the UI — a user must never be able to see or edit another user's hub. The agency admin's cross-user access exists for support and order fulfillment, not routine editing.
+Isolation is enforced in RLS, not just the UI. Staff and owners can only ever touch their own business. Admin access to another business's data must be audit-logged.
 
 ---
 
-# 9. Vertical templates
+# 9. WhatsApp messaging
 
-The vertical is an **optional preset offered at signup, never a gate** — most users will skip it entirely and start with a generic profile. When chosen, it sets default links and unlocks one signature feature. Users can add/remove/rename links afterward regardless.
-
-| Vertical | Signature feature |
-|---|---|
-| Restaurant / cafe | Hours-aware button — "Order now" during open hours, pre-book message after close |
-| Clinic / doctor | Appointment request — name + preferred-time form to the clinic's WhatsApp |
-| Retail shop | Today's offer banner the owner can change themselves |
-| Salon / spa | Gallery (before/after images from Storage) |
-| Hotel | Room enquiry via WhatsApp with dates pre-filled |
-
-Full default-link lists and signature-feature behaviour are in `PRD.md` §5.4. Build one vertical fully before cloning the pattern to the rest — which one is an open decision (see §15).
+- v1 uses **one shared number** under the Locallify Meta Business Portfolio, with the display name "Dobara by Locallify". Every message names the cafe ("Brew House: …").
+- **Click-to-chat first**: the customer sends the pre-filled message (`Hi Brew House 👋 (code: T4-7KQ2)`), which opens a 24-hour service window. Welcome messages, squad progress and scratch-card links go out as **service messages** inside that window.
+- Outbound messages outside the window must use approved templates (`PRD.md` §12): `dobara_prize_saved`, `dobara_prize_reminder`, `dobara_birthday`, `dobara_fill_tables`, `dobara_welcome_back`. Assume they're billed as marketing, at roughly ₹0.86–1.09 each.
+- Every marketing message ends with "Reply STOP to unsubscribe". An incoming "STOP", "band karo" or "unsubscribe" sets `opted_out_at` immediately.
+- Log every inbound and outbound message, with its cost, in `message_log`. It drives allowances and admin cost reporting.
+- Opt-in on the scan page is explicit, unticked by default, and stored with a timestamp.
 
 ---
 
-# 10. Link types
+# 10. Customer scan page rules
 
-WhatsApp (phone + message), Google review (URL), Website (URL), Call (phone), Instagram (URL), Facebook (URL), X/Twitter (URL), YouTube (URL), Snapchat (URL), LinkedIn (URL), GitHub (URL), Directions/Maps (URL), Menu (URL/PDF), Book/Appointment (URL or WhatsApp), Custom (label + URL). Each renders with a real brand icon (`lib/link-types.tsx` — lucide-react for generic types, `react-icons/fa6` for social/brand types) rather than a generic placeholder (`PRD.md` §5.5).
-
-WhatsApp links open `wa.me` with a pre-filled message. Call links use `tel:`.
+- No login, no app download, no password.
+- Under 2 s interactive on 4G and under 300 KB page weight, so keep client JS minimal.
+- States: new visitor, returning visitor (cookie found: "Welcome back, Arjun 👋", pending prizes, one-tap "I'm here"), and after billing (scratch card).
+- English, Hindi and Bengali. The owner picks the default and the customer can switch. All UI strings live in translation files, never hard-coded.
+- Show a short privacy notice. The consent text is visible and the box is unticked by default.
+- Scratch works with both touch and mouse, with a "Tap to reveal" fallback. Respect reduced motion.
+- Large tap targets and readable contrast. Never convey information by colour alone.
 
 ---
 
-# 11. Public hub rules
+# 11. Privacy
 
-- Unauthenticated, server-rendered, reading only active pages and active links.
-- Mobile-first, fast, accessible (visible focus, reduced-motion respected).
-- Logs a scan on view and a tap on each button click — both writes must be non-blocking / fire-and-forget so they never slow down the page a customer is looking at. This path runs on every scan; keep it fast.
-- Shows logo (or business initials if none), name, tagline, and active links as large tap targets over the chosen background (solid colour or uploaded image, with a scrim if needed for readability).
+- Collect only: name, WhatsApp number, optional birthday, visit history, bill amount and staff notes.
+- Data is used only by the specific cafe it was collected for. It is never shared across businesses and never sold.
+- A "DELETE" message, or a request made to the cafe, deletes that customer's data within 30 days.
+- The staff notes UI tells staff to record preferences only ("kam teekha"), never sensitive personal details.
+- India's DPDP rules apply. Flag anything that collects new personal data.
 
 ---
 
 # 12. Analytics events
 
-- `hub_view` (scan) — logged on public hub load.
-- `link_tap` — logged on button click, with `link_id`.
-- Keep raw rows in `scans`; derive scans/day, taps/link, device split, and busiest time in queries rather than storing pre-aggregated data.
-- Analytics tab framing should be plain-language ("142 scans this week, most on Friday evening") — this is a V2 feature, not MVP.
+`qr_scanned`, `session_joined`, `verify_clicked`, `verified`, `squad_size_set`, `squad_completed`, `squad_reward_served`, `visit_closed`, `scratch_issued`, `scratch_revealed`, `prize_redeemed`, `prize_expired`, `campaign_sent`, `campaign_redeemed`, `opt_out`, `live_board_alert_shown`.
+
+Keep the raw rows and derive the owner metrics in queries: scans, verified customers, new vs returning, repeat-visit rate, prizes issued/redeemed, campaign ROI, messages used. The north-star metric is **repeat visits per cafe per month**.
 
 ---
 
 # 13. Security, code standards, and final rule
 
-Never expose to browser code:
+Never expose these to browser code:
 
-- Supabase service role key
-- Clerk secret key
+- the Supabase service role key
+- the Clerk secret key
+- the WhatsApp access token or app secret
+- the device-cookie signing secret
+- the cron secret
 
-Never run from browser code:
+Also:
 
-- Any Supabase write that should be RLS-checked but is instead issued with the service role
-- Any cross-tenant read that isn't already scoped by RLS
+- Verify the Meta webhook signature on the raw body before trusting anything in it.
+- Rate-limit the scan and verify endpoints per IP and per device.
+- Every write that should be RLS-checked runs with the user's Clerk JWT, never with the service role from UI-triggered code.
+- Audit-log admin impersonation and customer exports.
 
-## RLS model
+## Known gotchas
 
-A user can select/update rows in `pages`, `links`, and `orders` only where the row's `owner_clerk_id` matches their Clerk ID. Agency admins (role claim) can read everything for support and can read/write all `orders` to manage fulfillment. Enforce this in the database — RLS is the isolation mechanism, not the UI (`PRD.md` §7).
-
-## Payments
-
-Never trust a client-submitted "order paid" status. Verify with Razorpay server-side (webhook or server-side confirm call) before creating or advancing an `orders` row's status.
-
-## Known gotcha
-
-Clerk third-party JWTs and Supabase Edge Function JWT verification don't always play nicely. The public hub redirect needs no user JWT — it's anonymous — so run that path public or with the service role and avoid the mismatch entirely rather than trying to force a JWT through it.
+- **Clerk + Supabase:** Clerk is a third-party auth provider in Supabase, and RLS reads the Clerk user ID from `auth.jwt() ->> 'sub'`. Org membership/role claims in the Clerk session token must be confirmed against the Clerk skill before RLS policies rely on them. Realtime subscriptions from the Live Board need the Clerk token passed to the Supabase client too.
+- **Anonymous paths** (scan page, WhatsApp webhook, cron) have no user JWT. Run them server-side with the service role and tight, explicit queries rather than forcing a JWT through.
+- **Meta webhook retries:** Meta redelivers events, so every handler must be idempotent.
 
 Use TypeScript. Prefer small functions, explicit types, server-only modules, and safe error handling.
 
@@ -261,32 +298,47 @@ When in doubt:
 
 # 14. Environment variables
 
-Only `NEXT_PUBLIC_*` values may reach browser code; everything else is server-only.
+Only `NEXT_PUBLIC_*` values may reach browser code. Everything else is server-only.
 
-| Variable | Purpose | Exposure |
+| Variable | Purpose | Exposure / status |
 |---|---|---|
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key | client + server |
-| `CLERK_SECRET_KEY` | Clerk server-side key | server only |
-| Clerk sign-in/up route vars (written by `clerk init`) | Sign-in/sign-up route + redirect config | client + server |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key | client + server — configured |
+| `CLERK_SECRET_KEY` | Clerk server-side key | server only — configured |
+| Clerk sign-in/up route vars (written by `clerk init`) | Sign-in/sign-up route and redirect config | client + server — configured |
+| `CLERK_WEBHOOK_SIGNING_SECRET` | Svix secret for `/api/webhooks/clerk` | server only |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | client + server — configured |
-| `NEXT_PUBLIC_PUBLISHABLE_KEY` | Supabase publishable key, used with RLS (Supabase's current naming — supersedes the old `ANON_KEY` term) | client + server — configured |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service-role access for the anonymous public-hub path and the Clerk signup webhook only | server only — configured |
-| `CLERK_WEBHOOK_SIGNING_SECRET` | Svix signing secret for verifying `/api/webhooks/clerk` deliveries | server only — set this when registering the webhook endpoint |
-| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Google Search Console site-verification code, read by `lib/seo.ts` | client + server — not yet set; get it from https://search.google.com/search-console |
+| `NEXT_PUBLIC_PUBLISHABLE_KEY` | Supabase publishable key, used with RLS | client + server — configured |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role, for the documented anonymous/webhook/cron paths only | server only — configured |
+| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Search Console verification, read by `lib/seo.ts` | client + server — not yet set |
+| `NEXT_PUBLIC_RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Parked Order Printed QR flow | client+server / server only |
+| `WHATSAPP_ACCESS_TOKEN` | Cloud API token for sending messages | server only — proposed, not yet set |
+| `WHATSAPP_PHONE_NUMBER_ID` | Sending number ID | server only — proposed, not yet set |
+| `WHATSAPP_APP_SECRET` | Verifies `X-Hub-Signature-256` | server only — proposed, not yet set |
+| `WHATSAPP_VERIFY_TOKEN` | Meta webhook GET verification | server only — proposed, not yet set |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Shared Dobara number for `wa.me` click-to-chat links | client + server — proposed, not yet set |
+| `DEVICE_COOKIE_SECRET` | Signs the customer device cookie | server only — proposed, not yet set |
+| `CRON_SECRET` | Authenticates scheduled-job routes | server only — proposed, not yet set |
 
-Keep this table in sync when variables change.
+Names marked "proposed" are confirmed or renamed in the prompt that first uses them. Keep this table in sync.
 
 ---
 
 # 15. Open decisions
 
-These are unresolved in `PRD.md` §13 — ask the user rather than assuming an answer:
+Ask the user rather than assuming an answer to any of these:
 
-- Price of a printed QR order, and whether shipping is domestic-only or international.
-- First vertical to build fully: restaurant vs clinic.
-- Whether an agency-managed paid service tier (Habib sets things up for a fee) still ships alongside self-serve, or is dropped entirely.
+- **What `business_id` maps to.** The recommended default is to reuse the existing `pages` row as the business (it already holds branding and the slug) and add a `clerk_org_id`. The alternative is a new `businesses` table. Decide in the M1 schema prompt.
+- **How businesses get onboarded.** Only businesses (owners + their staff) ever sign in — never the general public (confirmed 2026-11-16). Still open: can a business self-sign-up, or does the Locallify admin onboard each one (`PRD.md` §7.9 and §19 "Locallify sets everything up in person")?
+- **Scratch cards for squads.** Does every squad member get their own scratch card, or only the bill payer? (Default: owner's choice.)
+- **No-WhatsApp fallback.** Should there be a printed "prize code" fallback for customers without WhatsApp?
+- **Live Board hardware.** Which budget tablet model, if any, should be recommended?
+- **Message overage billing.** Prepaid credits or a post-paid invoice?
+- **Default language in Silchar.** Bengali by default, or ask each owner?
+- **Plan billing.** Is it manual for the pilot (the admin assigns plans) or automated? Automating it is not in M0–M5.
+- **Supabase region.** Confirm the existing project is in Mumbai (`PRD.md` §13), or plan a migration.
+- **Scheduled jobs.** Vercel Cron or Supabase pg_cron?
 
-**Resolved:** payment provider is Razorpay; redirect domain is `scan.locallifyagency.com`; QR generation library is `qr-code-styling`.
+**Resolved:** the redirect domain is `scan.locallifyagency.com` (table QR codes are `scan.locallifyagency.com/r/{business_slug}/t/{table_code}`); the QR library is `qr-code-styling`; messaging uses the WhatsApp Cloud API with one shared number in v1; Dobara is the main product (decided 2026-11-16); brand structure — Locallify Scan is the QR platform, **Dobara** ("by Locallify" in small text) is the product sold to restaurants (decided 2026-11-16).
 
 ---
 
@@ -294,13 +346,13 @@ These are unresolved in `PRD.md` §13 — ask the user rather than assuming an a
 
 "Run available checks" (§2 and §13) means running these from the project root and reporting the results:
 
-- `npx tsc --noEmit` — TypeScript, no emit (no `typecheck` script defined yet; add one if this becomes routine)
+- `npx tsc --noEmit` — TypeScript type check without emitting files (there's no `typecheck` script yet; add one if this becomes routine)
 - `npm run lint` — ESLint (`eslint`)
-- `npm run build` — Next.js production build, only when the change could affect the build
+- `npm run build` — Next.js production build, run only when the change could affect the build
 
 Development and runtime:
 
 - `npm run dev` — start the Next.js dev server
 - `npm run start` — run the production build locally after `npm run build`
 
-After implementation, run the TypeScript check and lint at minimum. Add `build` when routes, config, or server modules changed. Report the exact command output; do not claim a check passed without running it.
+After implementation, run the TypeScript check and lint at minimum. Add `build` when routes, config or server modules changed. Report the exact command output, and never claim a check passed without running it.
