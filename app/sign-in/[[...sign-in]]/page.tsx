@@ -1,9 +1,11 @@
 import { SignIn } from "@clerk/nextjs";
+import { AuthShell } from "@/components/owner/AuthShell";
+import { auth as copy } from "@/content/owner";
 
 export default function SignInPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <AuthShell title={copy.signInTitle} line={copy.signInLine}>
       <SignIn />
-    </div>
+    </AuthShell>
   );
 }
