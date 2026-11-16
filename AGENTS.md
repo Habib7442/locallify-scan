@@ -44,17 +44,21 @@ Do not build v2+ items (`PRD.md` §21) — Google review requests, Dish Passport
 
 The repo started as a link-in-bio product ("Locallify Scan"). Dobara replaced it as the main product on 2026-11-16. Existing code is **reusable infrastructure**, not target scope:
 
+**UI reset (2026-11-16):** all pages and UI components were deleted so the UI can be rebuilt from scratch. The last full version is commit `07d37bb` — restore any file with `git checkout 07d37bb -- <path>` (landing page + animated hero, dashboard/editor, onboarding, public hub `app/[slug]`, legal pages, pricing, checkout).
+
+What remains:
+
 | Existing piece | Status under Dobara |
 |---|---|
-| Clerk auth, `proxy.ts`, Clerk `user.created` webhook | Reuse; extend for Clerk Organizations (owner/staff) |
-| Supabase clients (`lib/supabase/*`), RLS pattern, `private.is_agency_admin()` | Reuse; new tables follow the same pattern scoped by business |
-| Branding system (`pages` theme/fonts/colours/logo/background, `branding-tab.tsx`, `lib/themes.ts`, `lib/fonts.ts`) | Reuse for the scan page (§7.2 "reuses Locallify Scan branding") |
-| Public hub `app/[slug]`, `components/hub/*`, links editor | Keep working; may serve as the cafe's general page. Not Dobara scope — don't extend without asking |
-| `scans` table + logging | Reuse for `qr_scanned` (§7.1 "reuses existing scan analytics") |
-| QR generation (`qr-code-styling`, `qr-tab.tsx`) | Reuse for per-table QR cards |
-| Order Printed QR / Razorpay (`app/api/create-order`, `app/api/verify-payment`, `components/checkout/*`, `orders-tab.tsx`, `orders` table) | **Parked.** Don't extend or delete without asking |
-| Vertical presets (`vertical-tab.tsx`, `VerticalFeatures.tsx`, `vertical_templates`) | **Parked.** Superseded by Dobara for restaurants |
-| Landing page / pricing (`components/landing/*`, `app/pricing`, `components/brand/DobaraWordmark.tsx`) | Repositioned for Dobara (2026-11-16, `prompts/dobara-landing-page.md`). CTAs open WhatsApp to Locallify (`lib/site.ts`); no self-signup CTA |
+| `app/layout.tsx`, `app/globals.css` (design tokens), `app/page.tsx` (placeholder), `app/sign-in`, `app/sign-up`, `components/ui/*` (shadcn primitives) | Kept as the base for the new UI |
+| Clerk auth, `proxy.ts`, Clerk webhook `app/api/webhooks/clerk`, `lib/provisioning.ts` | Reuse; extend for Clerk Organizations (owner/staff) |
+| Supabase clients (`lib/supabase/*`), schema + RLS pattern, `private.is_agency_admin()` | Reuse; new tables follow the same pattern scoped by business |
+| Branding data (`pages` theme/fonts/colours/logo/background columns, `lib/themes.ts`, `lib/fonts.ts`, `lib/storage.ts`) | Reuse for the scan page (§7.2 "reuses Locallify Scan branding"); the editor UI was deleted |
+| `scans` table | Reuse for `qr_scanned` (§7.1) |
+| `qr-code-styling`, `framer-motion` (installed) | Available for the rebuild |
+| `lib/site.ts` | Demo WhatsApp number (+91 9707370886) and `whatsappLink()` |
+| Order Printed QR / Razorpay API (`app/api/create-order`, `app/api/verify-payment`, `orders` table) | **Parked** (its UI was deleted). Don't extend or delete without asking |
+| `app/api/og-metadata`, `lib/link-types.tsx`, `vertical_templates` table | Leftovers from link-in-bio; unused. Don't extend without asking |
 
 ---
 
